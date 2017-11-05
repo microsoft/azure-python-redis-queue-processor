@@ -1,0 +1,61 @@
+version: '3'
+services:
+  redis:
+    container_name: redis
+    image: redis
+    ports:
+      - 6379:6379
+  scheduler:
+    container_name: scheduler
+    build: ./docker-files/python27
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: python scheduler.py /usr/src/data/data.encrypted --redisHost redis --redisPort 6379
+    volumes:
+      - ./app:/usr/src/app
+      - ./data:/usr/src/data
+  processor:
+    container_name: processor
+    build: ./docker-files/python27
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: python processor.py ../data/aes.encrypted --redisHost redis --redisPort 6379
+    volumes:
+      - ./app:/usr/src/app
+      - ./data:/usr/src/data
+    depends_on:
+      - redis
+  dashboard:
+    container_name: rq-dashboard
+    build: ./docker-files/rq-dashboard
+    ports:
+      - 8080:9181
+    environment:
+      - RQ_DASHBOARD_REDIS_HOST=redis
+    depends_on:
+      - redis
+  schedulernode:
+    container_name: schedulernode
+    image: centos:7
+    working_dir: /usr/src/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: bash scheduler_bootstrap.sh
+    volumes:
+      - ./app:/usr/src/app
+  processornode:
+    container_name: processornode
+    image: centos:7
+    working_dir: /usr/src/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: bash processor_bootstrap.sh
+    volumes:
+      - ./app:/usr/src/app
+
+
+
