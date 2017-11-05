@@ -1,0 +1,54 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountType": {
+            "value": "Standard_GRS"
+        },
+        "tenantId": {
+            "value": ""
+        },
+        "accessPolicies": {
+            "value": [
+                {
+                    "tenantId": "",
+                    "objectId": "",
+                    "permissions": {
+                        "keys": [
+                            "all"
+                        ],
+                        "secrets": [
+                            "all"
+                        ]
+                    }
+                }
+            ]
+        },
+        "secretsObject": {
+            "value": {
+                "secrets": [
+                    {
+                        "secretName": "adminUsername",
+                        "secretValue": "p@ssw0rd1!"
+                    },
+                    {
+                        "secretName": "adminPassword",
+                        "secretValue": "p@ssw0rd1!"
+                    }
+                ]
+            }
+        },
+        "adminUsername": {
+            "value" : "admin"
+        },
+        "adminPassword": {
+            "value" : "p@ssw0rd1!"
+        },
+        "storageAccountName": {
+            "value" : "redisrqprocessing"
+        },
+        "storageAccountKey": {
+            "value" : "thekey"
+        }
+    }
+}
