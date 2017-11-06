@@ -12,7 +12,7 @@ class Config(object):
         self.job_status_storage = ''
 
         # Job Status storage SAS token
-        self.job_status_sas_token = '
+        self.job_status_sas_token = ''
 
         # Azure Subscription
         self.subscription_name = ''

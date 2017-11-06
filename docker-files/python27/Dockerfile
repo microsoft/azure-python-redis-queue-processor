@@ -6,7 +6,8 @@ RUN yum -y update && \
 
 # Add your pip packages
 RUN pip install rq && \
-    pip install azure-keyvault
+    pip install azure-keyvault && \
+    pip install azure-storage
 
 WORKDIR /usr/src/app
 
