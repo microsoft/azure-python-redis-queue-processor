@@ -19,9 +19,15 @@ from aeskeywrapper import AESKeyWrapper
 from jobstatus import JobStatus, JobState
 from queuelogger import QueueLogger
 
+<<<<<<< HEAD
 QUEUELOGGER = QueueLogger(1)
 sys.stdout = QUEUELOGGER
 sys.stderr = QUEUELOGGER
+=======
+queuelogger = QueueLogger(1)
+sys.stdout = queuelogger
+sys.stderr = queuelogger
+>>>>>>> 1f28c09... Added support for logging to queue storage
 LOGGER = logging.getLogger(__name__)
 
 class Scheduler(object):
@@ -96,7 +102,11 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.DEBUG)
+<<<<<<< HEAD
     handler = logging.StreamHandler(QUEUELOGGER)
+=======
+    handler = logging.StreamHandler(queuelogger)
+>>>>>>> 1f28c09... Added support for logging to queue storage
     formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
