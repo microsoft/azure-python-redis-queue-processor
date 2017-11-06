@@ -8,16 +8,20 @@ import argparse
 import logging
 import redis
 import time
+import sys
+import socket
 from datetime import datetime
 from config import Config
 from functions import processing_job
 from rq import Queue, Connection
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
-from jobstatus import JobStatus
-from jobstatus import JobState
+from jobstatus import JobStatus, JobState
+from queuelogger import QueueLogger
 
-# Logger
+queuelogger = QueueLogger(1)
+sys.stdout = queuelogger
+sys.stderr = queuelogger
 LOGGER = logging.getLogger(__name__)
 
 class Scheduler(object):
@@ -92,8 +96,8 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    handler = logging.StreamHandler(queuelogger)
+    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 
@@ -122,6 +126,9 @@ if __name__ == "__main__":
 
     time.sleep(3)
     for job in JOBS:
-        print 'Job id:', job.id
-        print 'Job status:', job.status
-        print 'Job result:', job.result
+        jobinfo = {
+            'id': job.id,
+            'status' : job.status,
+            'result' : job.result
+        }
+        print(jobinfo)
