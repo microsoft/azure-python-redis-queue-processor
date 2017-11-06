@@ -51,10 +51,10 @@ class Validator(object):
         # get the job from redis
         jobStatus = redis_conn.get(job_key)
 
-        if(jobStatus is not None):
+        if(jobStatus != None):
             # check to see if processing started on the job, 
             # if the job is still in queued state do nothing and wait for a worker to pick it up to process
-            if(jobStatus.state is JobState.processing or jobStatus.state is JobState.processed):
+            if(jobStatus.state == JobState.processing or jobStatus.state == JobState.processed):
                 # get the lifespan of the job
                 lifespan = datetime.utcnow() - jobStatus.created
 
@@ -70,7 +70,7 @@ class Validator(object):
         :param object redis_conn: Redis connection object
         """
         # get all job status keys from redis, if the key exists it is an active job
-        keys = redis_conn.keys(self.config.job_status_key_pattern + '??')
+        keys = redis_conn.keys(self.config.job_status_key_prefix + '??')
         return keys
 
     def run(self):
