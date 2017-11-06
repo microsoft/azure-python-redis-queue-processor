@@ -115,7 +115,7 @@ class JobStatus(object):
             jobStatusSerialized = pickle.dumps(record)
 
             # write the serialized record out to Redis
-            self.storage_service_cache.set(jobId, jobStatusSerialized)
+            self.storage_service_cache.set(self.config.job_status_key_pattern + jobId, jobStatusSerialized)
             self.logger.info('queued: ' + jobId)
             return True
         except Exception as ex:
@@ -132,7 +132,7 @@ class JobStatus(object):
         """
         try:
             # get the serialized job status record from Redis
-            serializedRecord = self.storage_service_cache.get(jobId)
+            serializedRecord = self.storage_service_cache.get(self.config.job_status_key_pattern + jobId)
 
             # deserialize the record and return the JobStatusRecord object
             return pickle.loads(serializedRecord)
@@ -161,12 +161,13 @@ class JobStatus(object):
             # serialize the JobStatusRecord
             jobStatusSerialized = pickle.dumps(record)
 
-            # write the job status record out to table storage
-            self.storage_service_cache.set(jobId, jobStatusSerialized)
+            # write the job status record out to storage
+            self.storage_service_cache.set(self.config.job_status_key_pattern + jobId, jobStatusSerialized)
 
-            # if the job is complete or failed, write it out to the queue
+            # if the job is complete or failed, write it out to the queue and remove it from the job status collection
             if(jobState is JobState.done or jobState is JobState.failed):
                 self.queue_job_status(record)
+                self.storage_service_cache.delete(self.config.job_status_key_pattern + jobId)
 
             return True
         except Exception as ex:

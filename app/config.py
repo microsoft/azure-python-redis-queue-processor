@@ -8,10 +8,12 @@ class Config(object):
     This class contains configuration parameters for all applications
     """
     def __init__(self):
-        # Job Status storage account name
+        # Job status
         self.job_status_storage = ''
+        self.job_status_key_pattern = 'task-status-'
+        self.job_processing_max_time_sec = 60
 
-        # Job Status storage SAS token
+        # Job status storage SAS token
         self.job_status_sas_token = ''
 
         # Azure Subscription
