@@ -10,7 +10,7 @@ class Config(object):
     def __init__(self):
         # Job status
         self.job_status_storage = ''
-        self.job_status_key_pattern = 'task-status-'
+        self.job_status_key_prefix = 'task-status-'
         self.job_processing_max_time_sec = 60
 
         # Job status storage SAS token
