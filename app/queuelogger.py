@@ -44,7 +44,7 @@ class QueueLogger(object):
         message = {
             "machine": socket.gethostname(),
             "content": content,
-            "time": str(datetime.now())
+            "time": str(datetime.utcnow())
         }
         self.messages_to_write.append(message)        
         if(len(self.messages_to_write) >= self.batch_size):

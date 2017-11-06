@@ -72,7 +72,7 @@ class Scheduler(object):
         # read in the file and queue up jobs
         count = 0
         jobs = []
-        jobname = str(datetime.now())
+        jobname = str(datetime.utcnow())
         with open(data_file_path, 'r') as data_file:
             with Connection(redis_conn):
                 queue = Queue()
