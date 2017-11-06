@@ -1,0 +1,12 @@
+argparse
+adal
+azure.keyvault
+azure.common
+azure.storage.blob
+azure.storage.queue
+cryptography
+datetime
+enum
+redis
+requests
+rq
