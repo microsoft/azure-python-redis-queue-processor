@@ -17,9 +17,9 @@ from aeskeywrapper import AESKeyWrapper
 from rq import Queue, Connection, Worker
 from queuelogger import QueueLogger
 
-''' queuelogger = QueueLogger(1)
-sys.stdout = queuelogger
-sys.stderr = queuelogger '''
+QUEUELOGGER = QueueLogger(1)
+sys.stdout = QUEUELOGGER
+sys.stderr = QUEUELOGGER
 LOGGER = logging.getLogger(__name__)
 
 class Processor(object):
@@ -96,8 +96,8 @@ def init_logging():
     """
     Initialize the logger
     """
-    LOGGER.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
+    LOGGER.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(QUEUELOGGER)
     formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)

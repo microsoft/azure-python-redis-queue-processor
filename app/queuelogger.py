@@ -1,7 +1,6 @@
 """
     pip install azure-storage-queue
 """
-
 import sys
 import socket
 import json
@@ -51,6 +50,7 @@ class QueueLogger(object):
         """
         Adds a new Storage Queue message to the back of the message queue.
         """
-        json_content = json.dumps(self.messages_to_write,sort_keys=True,indent=4, separators=(',', ': '))
-        self.queue_service.put_message(self.config.logger_queue_name, content = json_content)
-        del self.messages_to_write[:]
+        if(self.messages_to_write):
+            json_content = json.dumps(self.messages_to_write,sort_keys=True,indent=4, separators=(',', ': '))
+            self.queue_service.put_message(self.config.logger_queue_name, content = json_content)
+            del self.messages_to_write[:]
