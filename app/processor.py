@@ -9,12 +9,17 @@ import os
 import logging
 import redis
 import time
+import sys
+import socket
 from config import Config
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
 from rq import Queue, Connection, Worker
+from queuelogger import QueueLogger
 
-# Logger
+QUEUELOGGER = QueueLogger(1)
+sys.stdout = QUEUELOGGER
+sys.stderr = QUEUELOGGER
 LOGGER = logging.getLogger(__name__)
 
 class Processor(object):
@@ -91,9 +96,9 @@ def init_logging():
     """
     Initialize the logger
     """
-    LOGGER.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    LOGGER.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(QUEUELOGGER)
+    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 

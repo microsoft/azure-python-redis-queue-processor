@@ -1,13 +1,19 @@
 """
   Functions that will be executed by the jobs
 """
+import sys
 import os
 import logging
+import socket
 from datetime import datetime
 from aescipher import AESCipher
-from jobstatus import JobStatus
-from jobstatus import JobState
+from jobstatus import JobStatus, JobState
 from rq import get_current_job
+from queuelogger import QueueLogger
+
+QUEUELOGGER = QueueLogger(1)
+sys.stdout = QUEUELOGGER
+sys.stderr = QUEUELOGGER
 LOGGER = logging.getLogger(__name__)
 
 def init_logging():
@@ -15,8 +21,8 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    handler = logging.StreamHandler(QUEUELOGGER)
+    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 
