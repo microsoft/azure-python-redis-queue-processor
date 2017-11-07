@@ -4,7 +4,6 @@ import redis
 import time
 import sys
 import pickle
-from queuelogger import QueueLogger
 from datetime import datetime
 from rq import Queue, Connection, Worker
 from jobstatus import JobState
@@ -12,9 +11,6 @@ from config import Config
 
 # Logger
 LOGGER = logging.getLogger(__name__)
-QUEUELOGGER = QueueLogger(1)
-sys.stdout = QUEUELOGGER
-sys.stderr = QUEUELOGGER
 
 class Validator(object):
     """
@@ -33,7 +29,7 @@ class Validator(object):
         self.config = Config()
         self.redis_host = redisHost
         self.redis_port = redisPort
-    
+
     def requeue_job(self, job_id):
         """
         Requeues a job for processing
@@ -54,7 +50,7 @@ class Validator(object):
 
         if(jobStatusSerialized != None):
             jobStatus = pickle.loads(jobStatusSerialized)
-            # check to see if processing started on the job, 
+            # check to see if processing started on the job,
             # if the job is still in queued state do nothing and wait for a worker to pick it up to process
             if(jobStatus.job_state == JobState.processing or jobStatus.job_state == JobState.processed):
                 # get the lifespan of the job
@@ -106,7 +102,7 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.INFO)
-    handler = logging.StreamHandler(QUEUELOGGER)
+    handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
