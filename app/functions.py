@@ -27,7 +27,6 @@ def init_logging():
     LOGGER.addHandler(handler)
 
 init_logging()
-jobstatus = JobStatus(LOGGER)    
 
 def multiply_by_two(x):
     """
@@ -46,7 +45,7 @@ def _create_aes_cipher():
     """
     return AESCipher(os.environ['AES_SECRET'], os.environ['AES_IV'])
 
-def processing_job(encryptedRecord):
+def processing_job(encryptedRecord, jobStatus):
     """
     This will decrypt the data and perform some task
     :param object encryptedRecord: This is the encrypted record to be processed
@@ -55,5 +54,5 @@ def processing_job(encryptedRecord):
     job = get_current_job()
     aes_cipher = _create_aes_cipher()
     record = int(aes_cipher.decrypt(encryptedRecord))
-    jobstatus.update_job_status(job.id, JobState.done)
+    jobStatus.update_job_status(job.id, JobState.done)
     return record * 2
