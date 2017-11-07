@@ -83,10 +83,6 @@ class Scheduler(object):
                 for record in data_file:
                     job = queue.enqueue(processing_job, self.format_record(record))
                     self.jobstatus.add_job_status(jobname, job.id, JobState.queued)
-<<<<<<< HEAD
-=======
-
->>>>>>> 6102aa6... Removing trailing spaces
                     count += 1
                     jobs.append(job)
 
