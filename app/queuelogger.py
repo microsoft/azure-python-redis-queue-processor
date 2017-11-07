@@ -18,13 +18,12 @@ class QueueLogger(object):
 
         :param int batch_size: The number of messages to write into a single Azure Storage Queue message.
         """
-        self.terminal = sys.stdout
         self.config = Config()
         self.batch_size = batch_size
         self.queue_service = QueueService(account_name =  self.config.logger_storage_account_name,
             sas_token = self.config.logger_queue_sas)
         self.queue_service.encode_function = models.QueueMessageFormat.noencode
-        self.messages_to_write = []
+        self.messages_to_write = list()
 
     def flush(self):
         """
@@ -38,7 +37,6 @@ class QueueLogger(object):
 
         :param str content: The content to write/buffer
         """
-        self.terminal.write(content)
         if(content == '\n' or content == ''):
             return
 
@@ -50,7 +48,7 @@ class QueueLogger(object):
         """
         Adds a new Storage Queue message to the back of the message queue.
         """
-        if(self.messages_to_write):
+        if(len(self.messages_to_write) > 0):
             json_content = json.dumps(self.messages_to_write,sort_keys=True,indent=4, separators=(',', ': '))
             self.queue_service.put_message(self.config.logger_queue_name, content = json_content)
-            del self.messages_to_write[:]
+            self.messages_to_write = list()

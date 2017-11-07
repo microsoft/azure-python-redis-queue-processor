@@ -95,10 +95,11 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler(QUEUELOGGER)
-    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
-    handler.setFormatter(formatter)
-    LOGGER.addHandler(handler)
+    if (not LOGGER.handlers):
+        handler = logging.StreamHandler(QUEUELOGGER)
+        formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+        handler.setFormatter(formatter)
+        LOGGER.addHandler(handler)
 
 def parse_args():
     """
