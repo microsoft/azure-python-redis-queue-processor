@@ -43,7 +43,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: bash scheduler_bootstrap.sh
+    command: bash scheduler_bootstrap.sh redis
     volumes:
       - ./app:/usr/src/app
   processornode:
@@ -53,7 +53,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: bash processor_bootstrap.sh
+    command: bash processor_bootstrap.sh redis
     volumes:
       - ./app:/usr/src/app
 
