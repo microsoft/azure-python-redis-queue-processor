@@ -51,9 +51,25 @@ def processing_job(encryptedRecord, redisHost, redisPort):
     :param object encryptedRecord: This is the encrypted record to be processed
     :return: returns result of the job
     """
+    # get the current job to process and create the aes cipher
     job = get_current_job()
     aes_cipher = _create_aes_cipher()
+
+    # decrypt the data to be processed
     record = int(aes_cipher.decrypt(encryptedRecord))
+
+    # similuate CPU intensive process for 1 second
+    start = datetime.utcnow()
+    run = True
+    while(run):
+        record = record * record
+        runtime = datetime.utcnow() - start
+        if(runtime.seconds > 1):
+            run = False
+    
+    # update the job status record
     jobstatus = JobStatus(LOGGER, redisHost, redisPort)
     jobstatus.update_job_status(job.id, JobState.done)
-    return record * 2
+
+    # return the record
+    return record
