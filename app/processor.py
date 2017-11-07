@@ -11,6 +11,7 @@ import redis
 import time
 import sys
 import socket
+import multiprocessing
 from config import Config
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
@@ -116,13 +117,21 @@ def parse_args():
 
     return parser.parse_args()
 
+def init(args):
+    LOGGER.info('Running Processor Sample')
+    PROCESSOR = Processor(LOGGER, args.redisHost, args.redisPort, args.queues, args.aesKeyFilePath)
+    PROCESSOR.run()
+
 if __name__ == "__main__":
     # init logging
     init_logging()
 
-    ARGS = parse_args()
+    commandLineArgs = parse_args()
+    # Fork process
+    num_process = multiprocessing.cpu_count()
+    LOGGER.info('Lunching {} processing'.format(num_process))
+    for i in xrange(num_process):
+        p = multiprocessing.Process(target=init, args=(commandLineArgs,))
+        p.start()
 
-    LOGGER.info('Running Processor Sample')
-    PROCESSOR = Processor(LOGGER, ARGS.redisHost, ARGS.redisPort, ARGS.queues, ARGS.aesKeyFilePath)
-    PROCESSOR.run()
 
