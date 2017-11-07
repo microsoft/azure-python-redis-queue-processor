@@ -11,7 +11,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: python scheduler.py /usr/src/data/data.encrypted --redisHost redis --redisPort 6379
+    command: bash init_scheduler.sh
     volumes:
       - ./app:/usr/src/app
       - ./data:/usr/src/data
