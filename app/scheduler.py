@@ -83,7 +83,6 @@ class Scheduler(object):
                 for record in data_file:
                     job = queue.enqueue(processing_job, self.format_record(record), self.redis_host, self.redis_port)
                     self.jobstatus.add_job_status(jobname, job.id, JobState.queued)
-                    
                     count += 1
                     jobs.append(job)
 
@@ -96,10 +95,11 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler(QUEUELOGGER)
-    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
-    handler.setFormatter(formatter)
-    LOGGER.addHandler(handler)
+    if (not LOGGER.handlers):
+        handler = logging.StreamHandler(QUEUELOGGER)
+        formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+        handler.setFormatter(formatter)
+        LOGGER.addHandler(handler)
 
 def parse_args():
     """

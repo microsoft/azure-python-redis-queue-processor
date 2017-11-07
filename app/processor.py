@@ -20,6 +20,7 @@ from queuelogger import QueueLogger
 QUEUELOGGER = QueueLogger(1)
 sys.stdout = QUEUELOGGER
 sys.stderr = QUEUELOGGER
+
 LOGGER = logging.getLogger(__name__)
 
 class Processor(object):
@@ -40,7 +41,7 @@ class Processor(object):
         self.redis_host = redisHost
         self.redis_port = redisPort
         self.encrypted_aes_key_path = encryptedAESKeyPath
-    
+
     def _get_aes_key(self):
         """
         Fetches the AES key using the values from the config
@@ -62,7 +63,7 @@ class Processor(object):
 
     def run(self):
         """
-        Execute the job processor - Fetch the AES key and start the Redis Q worker 
+        Execute the job processor - Fetch the AES key and start the Redis Q worker
         """
         self.logger.info('Using redis host: %s:%s', self.redis_host, self.redis_port)
 
