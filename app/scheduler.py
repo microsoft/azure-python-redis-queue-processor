@@ -17,11 +17,7 @@ from rq import Queue, Connection
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
 from jobstatus import JobStatus, JobState
-from queuelogger import QueueLogger
 
-QUEUELOGGER = QueueLogger(1)
-sys.stdout = QUEUELOGGER
-sys.stderr = QUEUELOGGER
 LOGGER = logging.getLogger(__name__)
 
 class Scheduler(object):
@@ -95,11 +91,10 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.DEBUG)
-    if (not LOGGER.handlers):
-        handler = logging.StreamHandler(QUEUELOGGER)
-        formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
-        handler.setFormatter(formatter)
-        LOGGER.addHandler(handler)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    handler.setFormatter(formatter)
+    LOGGER.addHandler(handler)
 
 def parse_args():
     """
@@ -118,6 +113,7 @@ if __name__ == "__main__":
     init_logging()
 
     ARGS = parse_args()
+    print(ARGS)
 
     LOGGER.info('Running Scheduler Sample')
     # start program

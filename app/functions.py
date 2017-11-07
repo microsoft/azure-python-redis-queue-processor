@@ -9,11 +9,7 @@ from datetime import datetime
 from aescipher import AESCipher
 from jobstatus import JobStatus, JobState
 from rq import get_current_job
-from queuelogger import QueueLogger
 
-QUEUELOGGER = QueueLogger(1)
-sys.stdout = QUEUELOGGER
-sys.stderr = QUEUELOGGER
 LOGGER = logging.getLogger(__name__)
 
 def init_logging():
@@ -21,7 +17,7 @@ def init_logging():
     Initialize the logger
     """
     LOGGER.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler(QUEUELOGGER)
+    handler = logging.StreamHandler()
     formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
