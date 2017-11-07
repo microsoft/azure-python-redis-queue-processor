@@ -32,14 +32,18 @@ class JobStatus(object):
     """
     Class for managing job status records.
     """
-    def __init__(self, logger):
+    def __init__(self, logger, redisHost, redisPort):
         """
         Initializes a new instance of the JobStatus class.
 
-        :param logger logger: The logger instance to use for logging.
+        :param logger logger: The logger instance to use for logging
+        :param str redis_host: Redis host where the Redis Q is running
+        :param int redis_port: Redis port where the Redis Q is running
         """
         self.logger = logger
         self.config = Config()
+        self.redis_host = redisHost
+        self.redis_port = redisPort
         if(self.init_storage_services() is False):
             raise Exception("Errors occured instantiating job status storage service.")
 
@@ -54,7 +58,7 @@ class JobStatus(object):
         """
         try:
             # creates instance of Redis client to use for job status storage
-            pool = redis.ConnectionPool(host=self.config.redis_host, port=self.config.redis_port)
+            pool = redis.ConnectionPool(host=self.redis_host, port=self.redis_port)
             self.storage_service_cache = redis.Redis(connection_pool=pool)
             
             # creates instance of QueueService to use for completed job status storage

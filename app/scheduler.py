@@ -38,7 +38,7 @@ class Scheduler(object):
         self.logger = logger
         self.redis_host = redis_host
         self.redis_port = redis_port
-        self.jobstatus = JobStatus(logger)
+        self.jobstatus = JobStatus(logger, redis_host, redis_port)
 
     def format_record(self, record):
         """
@@ -81,7 +81,7 @@ class Scheduler(object):
             with Connection(redis_conn):
                 queue = Queue()
                 for record in data_file:
-                    job = queue.enqueue(processing_job, self.format_record(record))
+                    job = queue.enqueue(processing_job, self.format_record(record), self.redis_host, self.redis_port)
                     self.jobstatus.add_job_status(jobname, job.id, JobState.queued)
                     
                     count += 1
