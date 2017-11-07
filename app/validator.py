@@ -3,6 +3,7 @@ import logging
 import redis
 import time
 import sys
+import pickle
 from queuelogger import QueueLogger
 from datetime import datetime
 from rq import Queue, Connection, Worker
@@ -49,17 +50,18 @@ class Validator(object):
         :param object redis_conn: Redis connection object
         """
         # get the job from redis
-        jobStatus = redis_conn.get(job_key)
+        jobStatusSerialized = redis_conn.get(job_key)
 
-        if(jobStatus != None):
+        if(jobStatusSerialized != None):
+            jobStatus = pickle.loads(jobStatusSerialized)
             # check to see if processing started on the job, 
             # if the job is still in queued state do nothing and wait for a worker to pick it up to process
-            if(jobStatus.state == JobState.processing or jobStatus.state == JobState.processed):
+            if(jobStatus.job_state == JobState.processing or jobStatus.job_state == JobState.processed):
                 # get the lifespan of the job
                 lifespan = datetime.utcnow() - jobStatus.created
 
                 # if the lifespan is greater than the config threshold, requeue it
-                if(lifespan.seconds() > self.config.job_processing_max_time_sec):
+                if(lifespan.seconds > self.config.job_processing_max_time_sec):
                     # requeue job for processing
                     self.requeue_job(jobStatus.job_id)
 
@@ -70,7 +72,7 @@ class Validator(object):
         :param object redis_conn: Redis connection object
         """
         # get all job status keys from redis, if the key exists it is an active job
-        keys = redis_conn.keys(self.config.job_status_key_prefix + '??')
+        keys = redis_conn.keys(self.config.job_status_key_prefix + '*')
         return keys
 
     def run(self):
