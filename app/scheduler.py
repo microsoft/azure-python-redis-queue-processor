@@ -81,7 +81,7 @@ class Scheduler(object):
             with Connection(redis_conn):
                 queue = Queue()
                 for record in data_file:
-                    job = queue.enqueue(processing_job, self.format_record(record), self.jobstatus)
+                    job = queue.enqueue(processing_job, self.format_record(record), self.redis_host, self.redis_port)
                     self.jobstatus.add_job_status(jobname, job.id, JobState.queued)
                     
                     count += 1

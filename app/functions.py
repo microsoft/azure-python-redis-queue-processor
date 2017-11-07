@@ -45,7 +45,7 @@ def _create_aes_cipher():
     """
     return AESCipher(os.environ['AES_SECRET'], os.environ['AES_IV'])
 
-def processing_job(encryptedRecord, jobStatus):
+def processing_job(encryptedRecord, redisHost, redisPort):
     """
     This will decrypt the data and perform some task
     :param object encryptedRecord: This is the encrypted record to be processed
@@ -54,5 +54,6 @@ def processing_job(encryptedRecord, jobStatus):
     job = get_current_job()
     aes_cipher = _create_aes_cipher()
     record = int(aes_cipher.decrypt(encryptedRecord))
-    jobStatus.update_job_status(job.id, JobState.done)
+    jobstatus = JobStatus(LOGGER, redisHost, redisPort)
+    jobstatus.update_job_status(job.id, JobState.done)
     return record * 2
