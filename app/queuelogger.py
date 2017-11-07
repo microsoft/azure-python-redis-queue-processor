@@ -39,7 +39,6 @@ class QueueLogger(object):
         :param str content: The content to write/buffer
         """
         self.terminal.write(content)
-<<<<<<< HEAD
         if(content == '\n' or content == ''):
             return
 
@@ -47,26 +46,11 @@ class QueueLogger(object):
         if(len(self.messages_to_write) >= self.batch_size):
             self.put_message_to_queue()
 
-=======
-        if(content == '\n' or content == ''): 
-            return
-        
-        self.messages_to_write.append(content)        
-        if(len(self.messages_to_write) >= self.batch_size):
-            self.put_message_to_queue()
-        
->>>>>>> 1f28c09... Added support for logging to queue storage
     def put_message_to_queue(self):
         """
         Adds a new Storage Queue message to the back of the message queue.
         """
-<<<<<<< HEAD
         if(self.messages_to_write):
             json_content = json.dumps(self.messages_to_write,sort_keys=True,indent=4, separators=(',', ': '))
             self.queue_service.put_message(self.config.logger_queue_name, content = json_content)
             del self.messages_to_write[:]
-=======
-        json_content = json.dumps(self.messages_to_write,sort_keys=True,indent=4, separators=(',', ': '))
-        self.queue_service.put_message(self.config.logger_queue_name, content = json_content)
-        del self.messages_to_write[:]
->>>>>>> 1f28c09... Added support for logging to queue storage
