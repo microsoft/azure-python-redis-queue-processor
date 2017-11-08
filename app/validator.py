@@ -7,6 +7,7 @@ import pickle
 from datetime import datetime
 from rq import Queue, Connection, Worker
 from jobstatus import JobState
+from results import Results
 from config import Config
 
 # Logger
@@ -29,7 +30,8 @@ class Validator(object):
         self.config = Config()
         self.redis_host = redisHost
         self.redis_port = redisPort
-
+        self.results = Results(logger, redisHost, redisPort)
+    
     def requeue_job(self, job_id):
         """
         Requeues a job for processing
@@ -95,7 +97,11 @@ class Validator(object):
         with Connection(redis_conn):
             activejobs = self.get_active_jobs(redis_conn)
             for jobKey in activejobs:
+                # validate job processing health using the job status collection
                 self.validate_job_health(jobKey, redis_conn)
+
+                # consolidate any completed results
+                self.results.consolidate_results()
 
 def init_logging():
     """

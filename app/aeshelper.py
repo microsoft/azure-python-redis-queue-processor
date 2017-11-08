@@ -2,8 +2,8 @@
 AES Helper functions using config
 """
 import os
-from app.aescipher import AESCipher
-from app.aeskeywrapper import AESKeyWrapper
+from aescipher import AESCipher
+from aeskeywrapper import AESKeyWrapper
 
 class AESHelper:
     """

@@ -1,7 +1,7 @@
 import logging
+import uuid
 import time
-from jobstatus import JobStatus, JobState
-from metricslogger import MetricsLogger
+from results import Results
 
 logger = logging.getLogger(__name__)
 
@@ -17,20 +17,23 @@ def initLogging():
 if __name__ == "__main__":
     initLogging()
 
-    # job status tests
-    jobName = "TestJob"
-    jobId = "1111"
-    js = JobStatus(logger)
-    js.add_job_status(jobName, jobId, JobState.none)
+    results = Results(logger, 'localhost', 6379)
+
+    resultsCount = results.count_results()
+
+    print("Results count: " + str(resultsCount))
+
+    for x in range(100):
+        results.write_result(str(uuid.uuid4()), "result content " + str(x))
+        print("Created results blob #" + str(x))
+
+    resultsCount = results.count_results()
+
+    print("Results count: " + str(resultsCount))
+
+    # sleep for 5 seconds to allow blob consistency to catch up
     time.sleep(5)
-    js.update_job_status(jobId, JobState.queued)
-    time.sleep(5)
-    js.update_job_status(jobId, JobState.processing)
-    time.sleep(5)
-    js.update_job_status(jobId, JobState.processed)
-    time.sleep(5)
-    js.update_job_status(jobId, JobState.failed, 'crazy error')
-    
-    # metrics logger test
-    ml = MetricsLogger(logger)
-    ml.capture_vm_metrics()
+
+    consolidatedResults = results.consolidate_results()
+
+    print("Consolidated results: " + str(consolidatedResults))
