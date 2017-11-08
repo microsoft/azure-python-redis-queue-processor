@@ -1,5 +1,5 @@
 """
-ES Helper functions using config
+AES Helper functions using config
 """
 import os
 from app.aescipher import AESCipher
