@@ -32,5 +32,9 @@
     "storage_account_name": "",
     "azure_keyvault_key_name": "RSAKey",
     "logger_queue_sas": "",
-    "vm_resource_group": ""
+    "vm_resource_group": "",
+    "results_storage": "",
+    "results_container": "",
+    "results_consolidated_file": "",
+    "results_consolidated_count_key": ""
 }

@@ -8,6 +8,7 @@ from azure.storage.blob import BlockBlobService, AppendBlobService
 from azure.storage.queue import QueueService, models
 from config import Config
 from aescipher import AESCipher
+from aeshelper import AESHelper
 
 class Results(object):
     """
@@ -23,6 +24,9 @@ class Results(object):
         self.config = Config()
         self.redis_host = redisHost
         self.redis_port = redisPort
+        # create an instance of AESCipher to use for encryption
+        aesHelper = AESHelper(self.config)
+        self.aescipher = aesHelper.create_aescipher_from_config()
         if(self.init_storage_services() is False):
             raise Exception("Errors occurred instantiating results storage service.")
 
@@ -45,9 +49,6 @@ class Results(object):
             # creates instance of Redis client to use for job status storage
             pool = redis.ConnectionPool(host=self.redis_host, port=self.redis_port)
             self.storage_service_cache = redis.Redis(connection_pool=pool)
-
-            # create an instance of AESCipher to use for encryption
-            self.aescipher = AESCipher("0123456789ABCDEF0123456789ABCDEF", "1234567812345678")
 
             return True
         except Exception as ex:
