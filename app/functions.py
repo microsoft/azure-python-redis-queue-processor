@@ -1,10 +1,11 @@
 """
   Functions that will be executed by the jobs
 """
-import sys
+import base64
 import os
 import logging
 import socket
+import sys
 from datetime import datetime
 from aescipher import AESCipher
 from jobstatus import JobStatus, JobState
@@ -52,16 +53,14 @@ def processing_job(encryptedRecord, redisHost, redisPort):
     aes_cipher = _create_aes_cipher()
 
     # decrypt the data to be processed
-    record = int(aes_cipher.decrypt(encryptedRecord))
+    record = int(aes_cipher.decrypt(base64.b64decode(encryptedRecord)))
 
     # similuate CPU intensive process for 1 second
     start = datetime.utcnow()
-    run = True
-    while(run):
-        record = record * record
+    while True:
         runtime = datetime.utcnow() - start
         if(runtime.seconds > 1):
-            run = False
+            break
     
     # update the job status record
     jobstatus = JobStatus(LOGGER, redisHost, redisPort)
