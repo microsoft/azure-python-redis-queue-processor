@@ -30,7 +30,7 @@
                     {
                         "secretName": "adminUsername",
                         "secretValue": "p@ssw0rd1!"
-                    },1
+                    },
                     {
                         "secretName": "adminPassword",
                         "secretValue": "p@ssw0rd1!"
