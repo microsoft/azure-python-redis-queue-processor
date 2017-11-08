@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     print("Results count: " + str(resultsCount))
 
-    for x in range(10000):
+    for x in range(100):
         results.write_result(str(uuid.uuid4()), "result content " + str(x))
         print("Created results blob #" + str(x))
 
