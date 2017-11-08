@@ -1,13 +1,15 @@
 """
   Functions that will be executed by the jobs
 """
+import sys
 import os
 import logging
+import socket
 from datetime import datetime
 from aescipher import AESCipher
-from jobstatus import JobStatus
-from jobstatus import JobState
+from jobstatus import JobStatus, JobState
 from rq import get_current_job
+
 LOGGER = logging.getLogger(__name__)
 
 def init_logging():
@@ -16,12 +18,11 @@ def init_logging():
     """
     LOGGER.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 
 init_logging()
-jobstatus = JobStatus(LOGGER)    
 
 def multiply_by_two(x):
     """
@@ -40,14 +41,31 @@ def _create_aes_cipher():
     """
     return AESCipher(os.environ['AES_SECRET'], os.environ['AES_IV'])
 
-def processing_job(encryptedRecord):
+def processing_job(encryptedRecord, redisHost, redisPort):
     """
     This will decrypt the data and perform some task
     :param object encryptedRecord: This is the encrypted record to be processed
     :return: returns result of the job
     """
+    # get the current job to process and create the aes cipher
     job = get_current_job()
     aes_cipher = _create_aes_cipher()
+
+    # decrypt the data to be processed
     record = int(aes_cipher.decrypt(encryptedRecord))
+
+    # similuate CPU intensive process for 1 second
+    start = datetime.utcnow()
+    run = True
+    while(run):
+        record = record * record
+        runtime = datetime.utcnow() - start
+        if(runtime.seconds > 1):
+            run = False
+    
+    # update the job status record
+    jobstatus = JobStatus(LOGGER, redisHost, redisPort)
     jobstatus.update_job_status(job.id, JobState.done)
-    return record * 2
+
+    # return the record
+    return record

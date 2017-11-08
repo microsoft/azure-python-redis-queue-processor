@@ -124,8 +124,8 @@
     },
     "variables": {
         "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sa')]",
-        "keyVaultName": "[concat(uniquestring(resourceGroup().id), 'kv')]",
-        "domainNameLabel": "[concat(uniquestring(resourceGroup().id), 'redisrqprocessing')]",
+        "keyVaultName": "[concat('kv', uniquestring(resourceGroup().id))]",
+        "domainNameLabel": "[concat('dn', uniquestring(resourceGroup().id))]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/', variables('schedulerSubnetName'))]",
         "publicIPAddressName": "jumpboxPublicIp",

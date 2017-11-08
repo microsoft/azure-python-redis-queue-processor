@@ -11,3 +11,4 @@ class Config(object):
     def __init__(self, config_file="config.json"):
         with open(config_file, "rt") as conf:
             self.__dict__ = json.loads(conf.read())
+

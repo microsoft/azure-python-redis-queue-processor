@@ -32,14 +32,18 @@ class JobStatus(object):
     """
     Class for managing job status records.
     """
-    def __init__(self, logger):
+    def __init__(self, logger, redisHost, redisPort):
         """
         Initializes a new instance of the JobStatus class.
 
-        :param logger logger: The logger instance to use for logging.
+        :param logger logger: The logger instance to use for logging
+        :param str redis_host: Redis host where the Redis Q is running
+        :param int redis_port: Redis port where the Redis Q is running
         """
         self.logger = logger
         self.config = Config()
+        self.redis_host = redisHost
+        self.redis_port = redisPort
         if(self.init_storage_services() is False):
             raise Exception("Errors occured instantiating job status storage service.")
 
@@ -54,7 +58,7 @@ class JobStatus(object):
         """
         try:
             # creates instance of Redis client to use for job status storage
-            pool = redis.ConnectionPool(host=self.config.redis_host, port=self.config.redis_port)
+            pool = redis.ConnectionPool(host=self.redis_host, port=self.redis_port)
             self.storage_service_cache = redis.Redis(connection_pool=pool)
             
             # creates instance of QueueService to use for completed job status storage
@@ -115,7 +119,7 @@ class JobStatus(object):
             jobStatusSerialized = pickle.dumps(record)
 
             # write the serialized record out to Redis
-            self.storage_service_cache.set(jobId, jobStatusSerialized)
+            self.storage_service_cache.set(self.config.job_status_key_prefix + jobId, jobStatusSerialized)
             self.logger.info('queued: ' + jobId)
             return True
         except Exception as ex:
@@ -132,7 +136,7 @@ class JobStatus(object):
         """
         try:
             # get the serialized job status record from Redis
-            serializedRecord = self.storage_service_cache.get(jobId)
+            serializedRecord = self.storage_service_cache.get(self.config.job_status_key_prefix + jobId)
 
             # deserialize the record and return the JobStatusRecord object
             return pickle.loads(serializedRecord)
@@ -161,12 +165,13 @@ class JobStatus(object):
             # serialize the JobStatusRecord
             jobStatusSerialized = pickle.dumps(record)
 
-            # write the job status record out to table storage
-            self.storage_service_cache.set(jobId, jobStatusSerialized)
+            # write the job status record out to storage
+            self.storage_service_cache.set(self.config.job_status_key_prefix + jobId, jobStatusSerialized)
 
-            # if the job is complete or failed, write it out to the queue
+            # if the job is complete or failed, write it out to the queue and remove it from the job status collection
             if(jobState is JobState.done or jobState is JobState.failed):
                 self.queue_job_status(record)
+                self.storage_service_cache.delete(self.config.job_status_key_prefix + jobId)
 
             return True
         except Exception as ex:

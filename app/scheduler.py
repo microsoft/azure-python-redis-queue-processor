@@ -8,16 +8,16 @@ import argparse
 import logging
 import redis
 import time
+import sys
+import socket
 from datetime import datetime
 from config import Config
 from functions import processing_job
 from rq import Queue, Connection
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
-from jobstatus import JobStatus
-from jobstatus import JobState
+from jobstatus import JobStatus, JobState
 
-# Logger
 LOGGER = logging.getLogger(__name__)
 
 class Scheduler(object):
@@ -34,7 +34,7 @@ class Scheduler(object):
         self.logger = logger
         self.redis_host = redis_host
         self.redis_port = redis_port
-        self.jobstatus = JobStatus(logger)
+        self.jobstatus = JobStatus(logger, redis_host, redis_port)
 
     def format_record(self, record):
         """
@@ -72,14 +72,13 @@ class Scheduler(object):
         # read in the file and queue up jobs
         count = 0
         jobs = []
-        jobname = str(datetime.now())
+        jobname = str(datetime.utcnow())
         with open(data_file_path, 'r') as data_file:
             with Connection(redis_conn):
                 queue = Queue()
                 for record in data_file:
-                    job = queue.enqueue(processing_job, self.format_record(record))
+                    job = queue.enqueue(processing_job, self.format_record(record), self.redis_host, self.redis_port)
                     self.jobstatus.add_job_status(jobname, job.id, JobState.queued)
-                    
                     count += 1
                     jobs.append(job)
 
@@ -93,7 +92,7 @@ def init_logging():
     """
     LOGGER.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 
@@ -114,6 +113,7 @@ if __name__ == "__main__":
     init_logging()
 
     ARGS = parse_args()
+    print(ARGS)
 
     LOGGER.info('Running Scheduler Sample')
     # start program
@@ -122,6 +122,9 @@ if __name__ == "__main__":
 
     time.sleep(3)
     for job in JOBS:
-        print 'Job id:', job.id
-        print 'Job status:', job.status
-        print 'Job result:', job.result
+        jobinfo = {
+            'id': job.id,
+            'status' : job.status,
+            'result' : job.result
+        }
+        print(jobinfo)

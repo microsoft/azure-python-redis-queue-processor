@@ -9,12 +9,14 @@ import os
 import logging
 import redis
 import time
+import sys
+import socket
+import multiprocessing
 from config import Config
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
 from rq import Queue, Connection, Worker
 
-# Logger
 LOGGER = logging.getLogger(__name__)
 
 class Processor(object):
@@ -35,7 +37,7 @@ class Processor(object):
         self.redis_host = redisHost
         self.redis_port = redisPort
         self.encrypted_aes_key_path = encryptedAESKeyPath
-    
+
     def _get_aes_key(self):
         """
         Fetches the AES key using the values from the config
@@ -57,7 +59,7 @@ class Processor(object):
 
     def run(self):
         """
-        Execute the job processor - Fetch the AES key and start the Redis Q worker 
+        Execute the job processor - Fetch the AES key and start the Redis Q worker
         """
         self.logger.info('Using redis host: %s:%s', self.redis_host, self.redis_port)
 
@@ -91,9 +93,9 @@ def init_logging():
     """
     Initialize the logger
     """
-    LOGGER.setLevel(logging.INFO)
+    LOGGER.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 
@@ -110,13 +112,21 @@ def parse_args():
 
     return parser.parse_args()
 
+def init(args):
+    LOGGER.info('Running Processor Sample')
+    PROCESSOR = Processor(LOGGER, args.redisHost, args.redisPort, args.queues, args.aesKeyFilePath)
+    PROCESSOR.run()
+
 if __name__ == "__main__":
     # init logging
     init_logging()
 
-    ARGS = parse_args()
+    commandLineArgs = parse_args()
+    # Fork process
+    num_process = multiprocessing.cpu_count()
+    LOGGER.info('Lunching {} processing'.format(num_process))
+    for i in xrange(num_process):
+        p = multiprocessing.Process(target=init, args=(commandLineArgs,))
+        p.start()
 
-    LOGGER.info('Running Processor Sample')
-    PROCESSOR = Processor(LOGGER, ARGS.redisHost, ARGS.redisPort, ARGS.queues, ARGS.aesKeyFilePath)
-    PROCESSOR.run()
 
