@@ -13,6 +13,17 @@ from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
 from config import Config
 import os
+import base64
+
+# Load configuration
+# Config file is stored in /var/lib/waagent/CustomData
+# File is base64 encoded
+try:
+    with open('/var/lib/waagent/CustomData', 'rt') as file_in:
+        with open('config.json', 'wt+') as file_out:
+            base64.decode(file_in, file_out)
+except:
+    pass # ignore the failure if runs in docker
 
 config = Config()
 

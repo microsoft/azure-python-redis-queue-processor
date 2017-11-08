@@ -49,6 +49,9 @@
         },
         "storageAccountKey": {
             "value" : "thekey"
+        },
+        "vmCustomData": {
+            "value" : ""
         }
     }
 }
