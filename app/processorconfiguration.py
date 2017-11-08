@@ -8,6 +8,7 @@ Steps:
 from azure.storage.blob import BlockBlobService
 from config import Config
 import os
+import base64
 
 # Config file is stored in /var/lib/waagent/CustomData
 # File is base64 encoded

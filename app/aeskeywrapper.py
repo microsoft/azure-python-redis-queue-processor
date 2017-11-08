@@ -87,13 +87,12 @@ class AESKeyWrapper:
 import random, string
 from config import Config
 
-config = Config()
-
 def generate_aes_key(length):
     letters = string.ascii_lowercase
     return ''.join(random.choice(letters) for i in range(length))
 
 if __name__ == "__main__":
+    config = Config()
     wrapper = AESKeyWrapper(vault = '',
                             client_id = '',
                             secret = '',
@@ -107,9 +106,9 @@ if __name__ == "__main__":
         key = generate_aes_key(32)
         wrapped_key = wrapper.wrap_aes_key_local(key, public_key)
         restored_aes_key = wrapper.unwrap_aes_key(wrapped_key)
-        if key != restored_aes_key.result:
+        if key != restored_aes_key:
             print("==========================")
             print(key)
             print("--------------------------")
-            print(restored_aes_key.result)
+            print(restored_aes_key)
             print("")
