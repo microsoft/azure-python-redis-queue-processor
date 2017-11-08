@@ -115,7 +115,7 @@
                 "description": "Storage account key where deployment resources are stored."
             }
         },
-        "customData": {
+        "vmCustomData": {
             "type": "string",
             "metadata": {
               "description": "String passed down to the Virtual Machine."
@@ -451,7 +451,7 @@
                         "computerNamePrefix": "[variables('schedulerVmssName')]",
                         "adminUsername": "[parameters('adminUsername')]",
                         "adminPassword": "[parameters('adminPassword')]",
-                        "customData": "[parameters('customData')]"
+                        "customData": "[parameters('vmCustomData')]"
                     },
                     "networkProfile": {
                         "networkInterfaceConfigurations": [
@@ -530,7 +530,7 @@
                         "computerNamePrefix": "[variables('workerVmssName')]",
                         "adminUsername": "[parameters('adminUsername')]",
                         "adminPassword": "[parameters('adminPassword')]",
-                        "customData": "[parameters('customData')]"
+                        "customData": "[parameters('vmCustomData')]"
                     },
                     "networkProfile": {
                         "networkInterfaceConfigurations": [

@@ -50,7 +50,7 @@
         "storageAccountKey": {
             "value" : "thekey"
         },
-        "customData": {
+        "vmCustomData": {
             "value" : ""
         }
     }
