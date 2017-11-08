@@ -19,6 +19,8 @@ class Results(object):
         Initializes a new instance of the JobStatus class.
 
         :param logger logger: The logger instance to use for logging
+        :param str redis_host: Redis host where the Redis Q is running
+        :param int redis_port: Redis port where the Redis Q is running
         """
         self.logger = logger
         self.config = Config()
@@ -113,6 +115,7 @@ class Results(object):
             self.storage_service.get_blob_to_stream(self.config.results_container, blob_name, blobContents)
             
             # append the result blob contents to the consolidated file
+            self.logger.info("Appended results blob: " + blob_name)
             self.append_storage_service.append_blob_from_stream(self.config.results_container, self.config.results_consolidated_file, blobContents)
 
             # delete the individual results blob now that it has been added to the consolidated file
@@ -128,6 +131,7 @@ class Results(object):
             # change the redis total results value to an int
             total = int(totalConsolidatedResults)    
             total += 1
+            self.logger.info("Results consolidated: " + str(total))
             self.storage_service_cache.set(self.config.results_consolidated_count_key, total)
 
         except Exception as ex:
