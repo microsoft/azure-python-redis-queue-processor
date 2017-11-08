@@ -113,8 +113,6 @@ def parse_args():
     """
     config = Config()
     parser = argparse.ArgumentParser(description='Process jobs from the Redis Q')
-    parser.add_argument('aesKeyFilePath', help='path to the encrypted aes key file.')
-    parser.add_argument('--queues', help='Redis Q queues to listen on', default=['high', 'default', 'low'])
     parser.add_argument('--redisHost', help='Redis Q host.', default=config.redis_host)
     parser.add_argument('--redisPort', help='Redis Q port.', default=config.redis_port)
 

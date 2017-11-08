@@ -7,7 +7,13 @@ pip install azure-keyvault
 pip install cryptography
 pip install rq
 
-tar -xzf schedulerscripts.tar.gz
+WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-python schedulerconfiguration.py
-python scheduler-unencrypted.py data/data.encrypted --redisHost $1 --redisPort 6379
+tar -xzf schedulerscripts.tar.gz -C $WORKDIR
+
+touch $HOME/crontab
+($HOME/crontab -l | echo "* * * * * python $WORKDIR/validator.py --redisHost $1 --redisPort 6379 >/dev/null 2>&1") | $HOME/crontab -
+sudo /bin/systemctl start crond.service
+
+python $WORKDIR/schedulerconfiguration.py
+python $WORKDIR/scheduler-unencrypted.py $WORKDIR/data/data.encrypted --redisHost $1 --redisPort 6379
