@@ -120,7 +120,7 @@ if __name__ == "__main__":
     SCHEDULER = Scheduler(LOGGER, ARGS.redisHost, ARGS.redisPort)
     JOBS = SCHEDULER.run(ARGS.dataFilePath)
 
-    time.sleep(3)
+    time.sleep(5)
     for job in JOBS:
         jobinfo = {
             'id': job.id,

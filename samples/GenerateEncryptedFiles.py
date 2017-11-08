@@ -1,20 +1,19 @@
+import base64
 import os
 import random
 import string
-from azure.storage.blob import BlockBlobService
-from azure.storage.blob import ContentSettings
+from dataGenerator import DataGenerator
+from azure.storage.blob import BlockBlobService, ContentSettings
 from app.aescipher import AESCipher
 from app.aeskeywrapper import AESKeyWrapper
 from app.config import Config
-config = Config()
+config = Config("app/config.json")
 
 script_filename = "app/scheduler.py"
-unencrypted_records_file = 'data/data'
-script_encrypted_filename = config.encrypted_files_folder + "/" + config.encrypted_scheduler_script_filename
-aes_key_encrypted_filename = config.encrypted_files_folder + "/" + config.encrypted_aes_key_filename
-encrypted_record_file = config.encrypted_files_folder + "/" + config.encrypted_data_filename
-
-
+script_encrypted_filename = os.path.join(config.encrypted_files_folder, config.encrypted_scheduler_script_filename)
+aes_key_encrypted_filename = os.path.join(config.encrypted_files_folder, config.encrypted_aes_key_filename)
+encrypted_record_file = os.path.join(config.encrypted_files_folder, config.encrypted_data_filename)
+number_of_records = 100
 
 wrapper = AESKeyWrapper(vault = config.azure_keyvault_url,
                         client_id = config.azure_keyvault_client_id,
@@ -42,13 +41,10 @@ cipher.encrypt_file_save_file(script_filename, script_encrypted_filename)
 print script_filename + " encrypted and saved to " + script_encrypted_filename
 
 # Encrypt data
-with open(encrypted_record_file, 'wb') as encryptedFile:
-    with open(unencrypted_records_file, 'r') as dataFile:
-            for record in dataFile:
-                encryptedRecord = cipher.encrypt(record)
-                encryptedFile.writelines(encryptedRecord+'\n')
+data_generator = DataGenerator(config)
+data_generator.generate_data(number_of_records, os.path.join(config.encrypted_files_folder, "data.encrypted"))
 
-print unencrypted_records_file + " is encrypted and saved to " + encrypted_record_file
+print "Generated encrypted records file stored at: " + encrypted_record_file
 
 # Upload generated files to blob
 blob_service = BlockBlobService(account_name=config.storage_account_name, sas_token=config.encrypted_files_sas_token)
@@ -66,4 +62,5 @@ blob_service.create_blob_from_path(container_name=config.storage_container_name,
 blob_service.create_blob_from_path(container_name=config.storage_container_name,
                                    blob_name=config.encrypted_data_filename,
                                    file_path=encrypted_record_file)
+
 print "Files succesfully uploaded to Azure.Storage"
