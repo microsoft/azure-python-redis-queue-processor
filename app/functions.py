@@ -9,6 +9,7 @@ import sys
 from datetime import datetime
 from aescipher import AESCipher
 from jobstatus import JobStatus, JobState
+from results import Results
 from rq import get_current_job
 
 LOGGER = logging.getLogger(__name__)
@@ -46,7 +47,6 @@ def processing_job(encryptedRecord, redisHost, redisPort):
     """
     This will decrypt the data and perform some task
     :param object encryptedRecord: This is the encrypted record to be processed
-    :return: returns result of the job
     """
     # get the current job to process and create the aes cipher
     job = get_current_job()
@@ -61,10 +61,11 @@ def processing_job(encryptedRecord, redisHost, redisPort):
         runtime = datetime.utcnow() - start
         if(runtime.seconds > 1):
             break
+
+    # write out the results
+    results = Results(LOGGER, redisHost, redisPort)
+    results.write_result(job.job_id, str(record))
     
     # update the job status record
     jobstatus = JobStatus(LOGGER, redisHost, redisPort)
     jobstatus.update_job_status(job.id, JobState.done)
-
-    # return the record
-    return record
