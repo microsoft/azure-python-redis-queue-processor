@@ -16,4 +16,4 @@ touch $HOME/crontab
 sudo /bin/systemctl start crond.service
 
 python $WORKDIR/schedulerconfiguration.py
-python $WORKDIR/scheduler-unencrypted.py $WORKDIR/data/data.encrypted --redisHost $1 --redisPort 6379
+python $WORKDIR/scheduler-unencrypted.py $WORKDIR/data/data.encrypted --redisHost $1 --redisPort 6379 2>&1 | python queuelogger.py

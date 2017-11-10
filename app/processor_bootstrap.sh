@@ -10,4 +10,4 @@ pip install rq
 tar -xzf processorscripts.tar.gz
 
 python processorconfiguration.py
-python processor.py data/aes.encrypted --redisHost $1 --redisPort 6379
+python processor.py data/aes.encrypted --redisHost $1 --redisPort 6379 2>&1 | python queuelogger.py
