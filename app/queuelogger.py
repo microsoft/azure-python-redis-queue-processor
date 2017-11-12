@@ -20,7 +20,7 @@ class QueueLogger(object):
         :param int batch_size: The number of messages to write into a single Azure Storage Queue message.
         """
         self.config = Config()
-        self.queue_service = QueueService(account_name =  self.config.logger_storage_account_name,
+        self.queue_service = QueueService(account_name =  self.config.storage_account_name,
             sas_token = self.config.logger_queue_sas)
         self.queue_service.encode_function = models.QueueMessageFormat.noencode
 
