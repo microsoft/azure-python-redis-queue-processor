@@ -23,10 +23,28 @@ class QueueLogger(object):
         self.queue_service = QueueService(account_name =  self.config.storage_account_name,
             sas_token = self.config.logger_queue_sas)
         self.queue_service.encode_function = models.QueueMessageFormat.noencode
+        if(self.init_storage() is False):
+            raise Exception("Unable to create logger queue")
+
 
     def start_listening(self):
         for line in fileinput.input():
             self.write(line.strip())
+
+    def init_storage(self):
+        """
+        Initializes storage table & queue, creating it if it doesn't exist.
+        :return: True on succeess. False on failure.
+        :rtype: boolean
+        """
+        try:
+            # will create the logger queue if it doesn't exist
+            self.queue_service.create_queue(self.config.logger_queue_name)
+            return True
+        except Exception as ex:
+            self.log_exception(ex, self.init_storage.__name__)
+            return False
+
 
     def flush(self):
         """
