@@ -1,2 +1,2 @@
 #!/bin/bash
-python processor.py ../data/aes.encrypted --redisHost redis --redisPort 6379 2>&1 | python queuelogger.py
+python app/processor.py $1 --redisHost $2 --redisPort 6379 2>&1 | python app/queuelogger.py

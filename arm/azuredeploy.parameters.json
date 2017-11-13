@@ -52,6 +52,12 @@
         },
         "vmCustomData": {
             "value" : ""
+        },
+        "workerBoostrapFiles": {
+            "value" : []
+        },
+        "schedulerBootstrapFiles": {
+            "value" : []
         }
     }
 }

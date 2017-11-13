@@ -64,7 +64,7 @@ def processing_job(encryptedRecord, redisHost, redisPort):
 
     # write out the results
     results = Results(LOGGER, redisHost, redisPort)
-    results.write_result(job.job_id, str(record))
+    results.write_result(job.id, str(record))
     
     # update the job status record
     jobstatus = JobStatus(LOGGER, redisHost, redisPort)

@@ -120,6 +120,18 @@
             "metadata": {
               "description": "String passed down to the Virtual Machine."
             }
+        },
+        "workerBoostrapFiles": {
+            "type": "array",
+            "metadata": {
+                "description": "List of blob files that are needed to boostrap the worker nodes."
+            }
+        },
+        "schedulerBootstrapFiles": {
+            "type": "array",
+            "metadata": {
+                "description": "List of blob files that are needed to boostrap the scheduler nodes."
+            }
         }
     },
     "variables": {
@@ -483,10 +495,7 @@
                                     "typeHandlerVersion": "2.0",
                                     "autoUpgradeMinorVersion": true,
                                     "settings": {
-                                        "fileUris": [
-                                            "https://config.blob.core.windows.net/scheduler-node-files/scheduler_bootstrap.sh",
-                                            "https://config.blob.core.windows.net/scheduler-node-files/schedulerscripts.tar.gz"
-                                        ]
+                                        "fileUris": "[parameters('schedulerBootstrapFiles')]"
                                     },
                                     "protectedSettings": {
                                         "commandToExecute": "[concat('./scheduler_bootstrap.sh ', variables('redisNicIpAddress'), ' &')]",
@@ -562,10 +571,7 @@
                                     "typeHandlerVersion": "2.0",
                                     "autoUpgradeMinorVersion": true,
                                     "settings": {
-                                        "fileUris": [
-                                            "https://config.blob.core.windows.net/processor-node-files/processor_bootstrap.sh",
-                                            "https://config.blob.core.windows.net/processor-node-files/processorscripts.tar.gz"
-                                        ]
+                                        "fileUris": "[parameters('workerBoostrapFiles')]"
                                     },
                                     "protectedSettings": {
                                         "commandToExecute": "[concat('./processor_bootstrap.sh ', variables('redisNicIpAddress'), ' &')]",
