@@ -40,12 +40,12 @@ class Results(object):
         """
         try:
             # creates instance of BlockBlobService and AppendBlobService to use for completed results storage
-            self.storage_service = BlockBlobService(account_name = self.config.job_status_storage, sas_token = self.config.job_status_sas_token)
-            self.append_storage_service = AppendBlobService(account_name = self.config.job_status_storage, sas_token = self.config.job_status_sas_token)
+            self.storage_service = BlockBlobService(account_name = self.config.storage_account_name, sas_token = self.config.results_container_sas_token)
+            self.append_storage_service = AppendBlobService(account_name = self.config.storage_account_name, sas_token = self.config.results_container_sas_token)
             self.storage_service.create_container(self.config.results_container)
 
             # creates instance of Azure QueueService
-            self.storage_service_queue = QueueService(account_name = self.config.job_status_storage, sas_token = self.config.job_status_sas_token)
+            self.storage_service_queue = QueueService(account_name = self.config.storage_account_name, sas_token = self.config.job_status_queue_sas_token)
             self.storage_service_queue.encode_function = models.QueueMessageFormat.noencode
 
             # creates instance of Redis client to use for job status storage
@@ -101,10 +101,10 @@ class Results(object):
         except Exception as ex:
             self.log_exception(ex, self.count_results.__name__)
             return False
-    
+
     def _consolidate_result_blob(self, blob_name):
         """
-        Consolidates individual result blob into consolidated result file. Individual result blob is deleted once it 
+        Consolidates individual result blob into consolidated result file. Individual result blob is deleted once it
         is added to the consolidated file.
 
         "param: str blob_name: Name of the individual result blob to consolidate.
@@ -113,7 +113,7 @@ class Results(object):
             # read the contents of the blob
             blobContents = io.BytesIO()
             self.storage_service.get_blob_to_stream(self.config.results_container, blob_name, blobContents)
-            
+
             # append the result blob contents to the consolidated file
             self.logger.info("Appended results blob: " + blob_name)
             self.append_storage_service.append_blob_from_stream(self.config.results_container, self.config.results_consolidated_file, blobContents)
@@ -122,14 +122,14 @@ class Results(object):
             self.logger.info("Deleting results blob: " + blob_name + " from container: " + self.config.results_container)
             self.storage_service.delete_blob(self.config.results_container, blob_name)
 
-            # update the consolidated results count in Redis, we do this per iteration of the loop so if 
+            # update the consolidated results count in Redis, we do this per iteration of the loop so if
             # this process / VM fails during consolidation we still have an accurate count
             totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_key)
             if(totalConsolidatedResults == None):
                 totalConsolidatedResults = 0
 
             # change the redis total results value to an int
-            total = int(totalConsolidatedResults)    
+            total = int(totalConsolidatedResults)
             total += 1
             self.logger.info("Results consolidated: " + str(total))
             self.storage_service_cache.set(self.config.results_consolidated_count_key, total)
@@ -139,7 +139,7 @@ class Results(object):
 
     def consolidate_results(self):
         """
-        Consolidates all individual result files into single result file in storage. Blobs are deleted once they 
+        Consolidates all individual result files into single result file in storage. Blobs are deleted once they
         are added to the consolidated file.
 
         "return: int count: Total count of results consolidated in result file.
@@ -159,7 +159,7 @@ class Results(object):
             while(blobsConsolidated):
                 blobsConsolidated = False
                 # get a list of result blobs to consolidate
-                resultBlobs = self.storage_service.list_blobs(self.config.results_container) 
+                resultBlobs = self.storage_service.list_blobs(self.config.results_container)
 
                 # iterate through the blobs in the container
                 for blob in resultBlobs:
@@ -171,7 +171,7 @@ class Results(object):
                         # consolidate the result blob
                         self._consolidate_result_blob(blob.name)
 
-                        # update the boolean so we know we should check for more blobs to consolidate after the 
+                        # update the boolean so we know we should check for more blobs to consolidate after the
                         # blobs listed in the current generator are all consolidated
                         blobsConsolidated = True
 
