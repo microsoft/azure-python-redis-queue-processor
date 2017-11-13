@@ -37,13 +37,13 @@ class MetricsLogger(object):
         """
         try:
             # creates instance of QueueService to use for completed metrics storage
-            self.storage_service_queue = QueueService(account_name = self.config.metrics_storage, sas_token = self.config.metrics_sas_token)
-            
+            self.storage_service_queue = QueueService(account_name = self.config.storage_account_name, sas_token = self.config.metrics_sas_token)
+
             # set the encode function for objects stored as queue message to noencode, serialization will be handled as a string by pickle
             # http://azure-storage.readthedocs.io/en/latest/ref/azure.storage.queue.queueservice.html
             # http://azure-storage.readthedocs.io/en/latest/_modules/azure/storage/queue/models.html
             self.storage_service_queue.encode_function = models.QueueMessageFormat.noencode
-            
+
             return True
         except Exception as ex:
             self._log_exception(ex, self.init_storage_service.__name__)
@@ -187,7 +187,7 @@ class MetricsLogger(object):
         """
         # get all VMs in the resource group specififed in the config
         vmList = self.get_vms_in_resource_group(self.config.vm_resource_group)
-        
+
         # iterate through each vm in the list
         for vmname in vmList:
             try:
