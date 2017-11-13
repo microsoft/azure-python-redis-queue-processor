@@ -23,6 +23,7 @@ class QueueLogger(object):
         self.queue_service = QueueService(account_name =  self.config.storage_account_name,
             sas_token = self.config.logger_queue_sas)
         self.queue_service.encode_function = models.QueueMessageFormat.noencode
+        self.init_storage()
 
     def start_listening(self):
         for line in fileinput.input():
@@ -41,7 +42,6 @@ class QueueLogger(object):
         except Exception as ex:
             self.write_stdout(ex)
             return False
-
 
     def flush(self):
         """

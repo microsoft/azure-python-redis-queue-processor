@@ -20,6 +20,7 @@ class AESHelper:
     def create_aescipher_from_config(self):
         """
         Create an AESCipher from config variables
+        :return AESCipher: AESCipher objects
         """
         # Decode AES key
         wrapper = AESKeyWrapper(vault = self.config.azure_keyvault_url,

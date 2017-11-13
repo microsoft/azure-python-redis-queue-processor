@@ -8,23 +8,27 @@ services:
   scheduler:
     container_name: scheduler
     build: ./docker-files/python27
+    working_dir: /usr/src
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: bash init_scheduler.sh
+    command: bash app/init_scheduler.sh data/data.encrypted redis
     volumes:
       - ./app:/usr/src/app
       - ./data:/usr/src/data
+      - ./config:/usr/src/config
   processor:
     container_name: processor
     build: ./docker-files/python27
+    working_dir: /usr/src
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: bash init_processor.sh
+    command: bash app/init_processor.sh data/aes.encrypted redis
     volumes:
       - ./app:/usr/src/app
       - ./data:/usr/src/data
+      - ./config:/usr/src/config
     depends_on:
       - redis
   dashboard:
@@ -49,23 +53,26 @@ services:
   schedulernode:
     container_name: schedulernode
     image: centos:7
-    working_dir: /usr/src/app
+    working_dir: /usr/src/docker-env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: bash scheduler_bootstrap.sh redis
     volumes:
-      - ./app:/usr/src/app
+      - ./docker-env:/usr/src/docker-env
+      - ./docker-env/waagent:/var/lib/waagent
+    command: bash scheduler_bootstrap.sh redis
   processornode:
     container_name: processornode
     image: centos:7
-    working_dir: /usr/src/app
+    working_dir: /usr/src/docker-env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: bash processor_bootstrap.sh redis
     volumes:
-      - ./app:/usr/src/app
+      - ./docker-env:/usr/src/docker-env
+      - ./docker-env/waagent:/var/lib/waagent
+    command: bash processor_bootstrap.sh redis
+
 
 
 

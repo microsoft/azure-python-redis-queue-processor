@@ -1,2 +1,2 @@
 #!/bin/bash
-python scheduler.py  /usr/src/data/data.encrypted --redisHost redis --redisPort 6379 2>&1 | python queuelogger.py
+python app/scheduler.py  $1 --redisHost $2 --redisPort 6379 2>&1 | python app/queuelogger.py

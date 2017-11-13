@@ -13,8 +13,9 @@ import base64
 # Config file is stored in /var/lib/waagent/CustomData
 # File is base64 encoded
 try:
+    os.makedirs('config')
     with open('/var/lib/waagent/CustomData', 'rt') as file_in:
-        with open('config.json', 'wt+') as file_out:
+        with open('config/config.json', 'wt+') as file_out:
             base64.decode(file_in, file_out)
 except:
     pass # ignore the failure if runs in docker

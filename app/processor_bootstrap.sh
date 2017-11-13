@@ -7,7 +7,7 @@ pip install azure-keyvault
 pip install cryptography
 pip install rq
 
-tar -xzf processorscripts.tar.gz
+tar -xzf app.tar.gz
 
-python processorconfiguration.py
-python processor.py data/aes.encrypted --redisHost $1 --redisPort 6379 2>&1 | python queuelogger.py
+python app/processorconfiguration.py
+python app/processor.py data/aes.encrypted --redisHost $1 --redisPort 6379 2>&1 | python app/queuelogger.py
