@@ -1,7 +1,6 @@
 {
     "scheduler_script_filename": "",
     "client_id": "",
-    "job_status_storage": "",
     "azure_keyvault_url": "",
     "storage_container_name": "",
     "subscription_name": "",
@@ -11,13 +10,11 @@
     "encrypted_files_sas_token": "",
     "subscription_id": "",
     "azure_keyvault_secret": "",
-    "job_status_key_prefix": "task-status-",
     "encrypted_aes_key_filename": "",
     "azure_keyvault_key_version": "",
     "redis_port": 6379,
     "key_vault_uri": "",
     "aes_key_length": 32,
-    "job_status_sas_token": "",
     "metrics_storage": "",
     "encrypted_files_folder": "",
     "azure_keyvault_client_id": "",
@@ -32,8 +29,11 @@
     "logger_queue_sas": "",
     "logger_queue_name": "",
     "vm_resource_group": "",
-    "results_storage": "",
     "results_container": "",
+    "results_container_sas_token":"",
     "results_consolidated_file": "",
-    "results_consolidated_count_key": ""
+    "results_consolidated_count_key": "",
+    "job_status_key_prefix": "task-status-",
+    "job_status_queue_name":"",
+    "job_status_queue_sas_token":""
 }

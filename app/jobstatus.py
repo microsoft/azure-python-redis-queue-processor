@@ -27,7 +27,7 @@ class JobStatusRecord(object):
         self.created = None
         self.last_updated = None
         self.last_error = None
-        
+
 class JobStatus(object):
     """
     Class for managing job status records.
@@ -60,15 +60,16 @@ class JobStatus(object):
             # creates instance of Redis client to use for job status storage
             pool = redis.ConnectionPool(host=self.redis_host, port=self.redis_port)
             self.storage_service_cache = redis.Redis(connection_pool=pool)
-            
+
             # creates instance of QueueService to use for completed job status storage
-            self.storage_service_queue = QueueService(account_name = self.config.job_status_storage, sas_token = self.config.job_status_sas_token)
-            
+            self.storage_service_queue = QueueService(account_name = self.config.storage_account_name,
+                sas_token = self.config.job_status_queue_sas_token)
+
             # set the encode function for objects stored as queue message to noencode, serialization will be handled as a string by pickle
             # http://azure-storage.readthedocs.io/en/latest/ref/azure.storage.queue.queueservice.html
             # http://azure-storage.readthedocs.io/en/latest/_modules/azure/storage/queue/models.html
             self.storage_service_queue.encode_function = models.QueueMessageFormat.noencode
-            
+
             return True
         except Exception as ex:
             self.log_exception(ex, self.init_storage_services.__name__)
@@ -82,7 +83,7 @@ class JobStatus(object):
         """
         try:
             # will create job status queue if it doesn't exist
-            self.storage_service_queue.create_queue(self.config.job_status_storage)
+            self.storage_service_queue.create_queue(self.config.job_status_queue_name)
             return True
         except Exception as ex:
             self.log_exception(ex, self.init_storage.__name__)
@@ -188,7 +189,7 @@ class JobStatus(object):
         """
         try:
             jobStatusRecordSerialized = pickle.dumps(jobStatusRecord)
-            self.storage_service_queue.put_message(self.config.job_status_storage, jobStatusRecordSerialized)
+            self.storage_service_queue.put_message(self.config.job_status_queue_name, jobStatusRecordSerialized)
             return True
         except Exception as ex:
             self.log_exception(ex, self.queue_job_status.__name__)
