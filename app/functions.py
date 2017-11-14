@@ -20,7 +20,7 @@ def init_logging():
     """
     LOGGER.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
-    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    formatter = logging.Formatter('%(asctime)s functions.py ' + socket.gethostname() +' %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 
@@ -65,7 +65,7 @@ def processing_job(encryptedRecord, redisHost, redisPort):
     # write out the results
     results = Results(LOGGER, redisHost, redisPort)
     results.write_result(job.id, str(record))
-    
+
     # update the job status record
     jobstatus = JobStatus(LOGGER, redisHost, redisPort)
     jobstatus.update_job_status(job.id, JobState.done)
