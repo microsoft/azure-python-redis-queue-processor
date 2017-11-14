@@ -29,6 +29,18 @@ services:
       - ./app:/usr/src/app
       - ./data:/usr/src/data
       - ./config:/usr/src/config
+  validator:
+    container_name: validator
+    build: ./docker-files/python27
+    working_dir: /usr/src
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: python app/validator.py --redisHost redis
+    volumes:
+      - ./app:/usr/src/app
+      - ./data:/usr/src/data
+      - ./config:/usr/src/config
     depends_on:
       - redis
   dashboard:
