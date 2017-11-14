@@ -95,7 +95,7 @@ def init_logging():
     """
     LOGGER.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
-    formatter = logging.Formatter(socket.gethostname() + ' %(asctime)s %(name)-20s %(levelname)-5s %(message)s')
+    formatter = logging.Formatter('%(asctime)s processor.py ' + socket.gethostname() +' %(levelname)-5s %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
 

@@ -10,7 +10,7 @@ def initLogging():
     # setup a console logger by default
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s test.py ' + socket.gethostname() +' %(levelname)-5s %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
