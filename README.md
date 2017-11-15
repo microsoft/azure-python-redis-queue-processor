@@ -1,4 +1,4 @@
-# Introduction 
+# Introduction
 High scale parallel processing architecture in Azure based on Redis RQ and written in Azure.
 
 ### Solution Characteristics
@@ -39,10 +39,11 @@ All PyPI package dependencies are included in requirements.txt.
 2. Install dependencies
 3. Open bash shell
 4. Pip install package dependencies
-5. Update app/config.py with values for your Azure Subscription and app parameters
-```
-sudo pip install -r requirements.txt
-```
+5. Clone `config/config.example.json` and rename it to `config.json`
+6. Supply `config.json` with values for your Azure Subscription and app parameter
+7. Run `sudo pip install -r requirements.txt`
+8. Run `bash build.sh`
+
 
 # Processing Workflow
 At a high level, this repo provides a reference solution for a queue based parallel job processing solution. Jobs to be processed are queued and N number of workers pull jobs off the queue in parallel and process them.

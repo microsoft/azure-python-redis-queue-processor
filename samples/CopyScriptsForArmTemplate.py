@@ -64,6 +64,7 @@ for file in files_to_encrypt:
     aes_cipher.encrypt_file_save_file(file, encrypted_script_filename)
     print file + ' is encrypted and saved to ' + encrypted_script_filename
 
+blob_service.create_container(container_name=config.storage_container_name)
 blob_service.create_blob_from_path(container_name=config.storage_container_name,
                                    blob_name=config.encrypted_scheduler_script_filename,
                                    file_path=encrypted_script_filename)

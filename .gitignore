@@ -106,3 +106,5 @@ app/cpp/program
 .vs
 .env.json
 docker-env
+config.json.encoded
+config.json
