@@ -77,11 +77,8 @@ class Results(object):
         :rtype: boolean
         """
         try:
-            # base64 encode the result before encrypting to ensure compat
-            encodedResult = base64.b64encode(result)
-
-            # encrypt the encoded result
-            encryptedResult = self.aescipher.encrypt(encodedResult)
+            # encrypt the encoded result and then encode it
+            encryptedResult = base64.b64encode(self.aescipher.encrypt(result))
 
             # write the encrypted and encoded result out to blob storage using the job id as the file name
             self.storage_service.create_blob_from_text(self.config.results_container, job_id, encryptedResult)
@@ -111,12 +108,14 @@ class Results(object):
         """
         try:
             # read the contents of the blob
-            blobContents = io.BytesIO()
-            self.storage_service.get_blob_to_stream(self.config.results_container, blob_name, blobContents)
+            with io.BytesIO() as blobContents:
+                self.storage_service.get_blob_to_stream(self.config.results_container, blob_name, blobContents)
+                blobContents.write(b'\n')
+                blobContents.seek(0)
 
-            # append the result blob contents to the consolidated file
-            self.logger.info("Appended results blob: " + blob_name)
-            self.append_storage_service.append_blob_from_stream(self.config.results_container, self.config.results_consolidated_file, blobContents)
+                # append the result blob contents to the consolidated file
+                self.logger.info("Appended results blob: " + blob_name)
+                self.append_storage_service.append_blob_from_stream(self.config.results_container, self.config.results_consolidated_file, blobContents)
 
             # delete the individual results blob now that it has been added to the consolidated file
             self.logger.info("Deleting results blob: " + blob_name + " from container: " + self.config.results_container)

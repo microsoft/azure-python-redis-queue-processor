@@ -100,8 +100,8 @@ class Validator(object):
                 # validate job processing health using the job status collection
                 self.validate_job_health(jobKey, redis_conn)
 
-                # consolidate any completed results
-                self.results.consolidate_results()
+        # consolidate any completed results
+        self.results.consolidate_results()
 
 def init_logging():
     """
