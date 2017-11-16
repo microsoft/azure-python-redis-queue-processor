@@ -2,6 +2,7 @@ import argparse
 import logging
 import redis
 import time
+import socket
 import sys
 import pickle
 from datetime import datetime

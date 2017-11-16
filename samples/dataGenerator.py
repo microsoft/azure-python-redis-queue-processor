@@ -19,7 +19,7 @@ class DataGenerator(object):
 
 
 if __name__ == "__main__":
-    config = Config("app/config.json")
+    config = Config()
     data_generator = DataGenerator(config)
 
     data_generator.generate_data(10, "data/data.10.encrypted")
