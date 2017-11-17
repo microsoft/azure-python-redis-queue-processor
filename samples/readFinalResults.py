@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     results = []
     with io.BytesIO() as blobContents:
-        storage_service.get_blob_to_stream(config.results_container, config.results_consolidated_file, blobContents)
+        storage_service.get_blob_to_stream(config.results_container_name, config.results_consolidated_file, blobContents)
         blobContents.seek(0)
 
         for result in blobContents.readlines():

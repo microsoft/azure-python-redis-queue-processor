@@ -42,7 +42,7 @@ class Results(object):
             # creates instance of BlockBlobService and AppendBlobService to use for completed results storage
             self.storage_service = BlockBlobService(account_name = self.config.storage_account_name, sas_token = self.config.results_container_sas_token)
             self.append_storage_service = AppendBlobService(account_name = self.config.storage_account_name, sas_token = self.config.results_container_sas_token)
-            self.storage_service.create_container(self.config.results_container)
+            self.storage_service.create_container(self.config.results_container_name)
 
             # creates instance of Azure QueueService
             self.storage_service_queue = QueueService(account_name = self.config.storage_account_name, sas_token = self.config.job_status_queue_sas_token)
@@ -81,7 +81,7 @@ class Results(object):
             encryptedResult = base64.b64encode(self.aescipher.encrypt(result))
 
             # write the encrypted and encoded result out to blob storage using the job id as the file name
-            self.storage_service.create_blob_from_text(self.config.results_container, job_id, encryptedResult)
+            self.storage_service.create_blob_from_text(self.config.results_container_name, job_id, encryptedResult)
         except Exception as ex:
             self.log_exception(ex, self.write_result.__name__)
             return False
@@ -93,7 +93,7 @@ class Results(object):
         "return: int count: Total count of results in storage.
         """
         try:
-            consolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_key)
+            consolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
             return consolidatedResults
         except Exception as ex:
             self.log_exception(ex, self.count_results.__name__)
@@ -109,21 +109,21 @@ class Results(object):
         try:
             # read the contents of the blob
             with io.BytesIO() as blobContents:
-                self.storage_service.get_blob_to_stream(self.config.results_container, blob_name, blobContents)
+                self.storage_service.get_blob_to_stream(self.config.results_container_name, blob_name, blobContents)
                 blobContents.write(b'\n')
                 blobContents.seek(0)
 
                 # append the result blob contents to the consolidated file
                 self.logger.info("Appended results blob: " + blob_name)
-                self.append_storage_service.append_blob_from_stream(self.config.results_container, self.config.results_consolidated_file, blobContents)
+                self.append_storage_service.append_blob_from_stream(self.config.results_container_name, self.config.results_consolidated_file, blobContents)
 
             # delete the individual results blob now that it has been added to the consolidated file
-            self.logger.info("Deleting results blob: " + blob_name + " from container: " + self.config.results_container)
-            self.storage_service.delete_blob(self.config.results_container, blob_name)
+            self.logger.info("Deleting results blob: " + blob_name + " from container: " + self.config.results_container_name)
+            self.storage_service.delete_blob(self.config.results_container_name, blob_name)
 
             # update the consolidated results count in Redis, we do this per iteration of the loop so if
             # this process / VM fails during consolidation we still have an accurate count
-            totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_key)
+            totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
             if(totalConsolidatedResults == None):
                 totalConsolidatedResults = 0
 
@@ -131,7 +131,7 @@ class Results(object):
             total = int(totalConsolidatedResults)
             total += 1
             self.logger.info("Results consolidated: " + str(total))
-            self.storage_service_cache.set(self.config.results_consolidated_count_key, total)
+            self.storage_service_cache.set(self.config.results_consolidated_count_redis_key, total)
 
         except Exception as ex:
             self.log_exception(ex, self.consolidate_results.__name__ + " - Error consolidating result blob.")
@@ -148,8 +148,8 @@ class Results(object):
 
         try:
             # ensure the consolidated append blob exists
-            if(self.append_storage_service.exists(self.config.results_container, blob_name=self.config.results_consolidated_file) == False):
-                self.append_storage_service.create_blob(self.config.results_container, self.config.results_consolidated_file)
+            if(self.append_storage_service.exists(self.config.results_container_name, blob_name=self.config.results_consolidated_file) == False):
+                self.append_storage_service.create_blob(self.config.results_container_name, self.config.results_consolidated_file)
 
             # boolean to track whether or not we found any blobs to consolidate
             blobsConsolidated = True
@@ -158,7 +158,7 @@ class Results(object):
             while(blobsConsolidated):
                 blobsConsolidated = False
                 # get a list of result blobs to consolidate
-                resultBlobs = self.storage_service.list_blobs(self.config.results_container)
+                resultBlobs = self.storage_service.list_blobs(self.config.results_container_name)
 
                 # iterate through the blobs in the container
                 for blob in resultBlobs:
@@ -175,7 +175,7 @@ class Results(object):
                         blobsConsolidated = True
 
             # write the count of results we consolidated out to queue to provide status
-            self.storage_service_queue.put_message(self.config.job_status_storage, str(resultsConsolidated) + " results consolidated.")
+            self.storage_service_queue.put_message(self.config.job_status_queue_name, str(resultsConsolidated) + " results consolidated.")
 
             return resultsConsolidated
 

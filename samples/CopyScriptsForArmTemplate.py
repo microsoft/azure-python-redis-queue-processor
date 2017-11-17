@@ -16,8 +16,6 @@ config = Config('config/config.json')
 encrypted_aes_key_filename = "data/aes.encrypted"
 encrypted_script_filename = config.encrypted_files_folder + "/" + config.encrypted_scheduler_script_filename
 
-app_code_folder = 'app'
-
 files_to_encrypt = [
     "app/scheduler.py"
 ]
@@ -31,7 +29,7 @@ def tar_exclusion(file):
 
 # Zip up all python files under the app folder
 with tarfile.open("app.tar.gz", "w:gz") as tar:
-    tar.add(app_code_folder, recursive=True, exclude=tar_exclusion)
+    tar.add(config.app_code_folder, recursive=True, exclude=tar_exclusion)
 print 'app.tar.gz files created.'
 
 blob_service = BlockBlobService(account_name=config.storage_account_name,

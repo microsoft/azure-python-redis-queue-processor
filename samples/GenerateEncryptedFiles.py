@@ -17,9 +17,9 @@ encrypted_record_file = os.path.join(config.encrypted_files_folder, config.encry
 number_of_records = 100
 
 wrapper = AESKeyWrapper(vault = config.azure_keyvault_url,
-                        client_id = config.azure_keyvault_client_id,
-                        secret = config.azure_keyvault_secret,
-                        tenant = config.azure_keyvault_tenant_id,
+                        client_id = config.service_principal_client_id,
+                        secret = config.service_principal_secret,
+                        tenant = config.tenant_id,
                         key_name = config.azure_keyvault_key_name,
                         key_version = config.azure_keyvault_key_version)
 
