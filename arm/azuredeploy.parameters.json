@@ -54,10 +54,27 @@
             "value" : ""
         },
         "workerBoostrapFiles": {
-            "value" : []
+            "value" : [
+                "https://config.blob.core.windows.net/processor-node-files/processor_bootstrap.sh",
+                "https://config.blob.core.windows.net/app-files/app.tar.gz"
+            ]
         },
         "schedulerBootstrapFiles": {
-            "value" : []
+            "value" : [
+                "https://config.blob.core.windows.net/scheduler-node-files/scheduler_bootstrap.sh",
+                "https://config.blob.core.windows.net/app-files/app.tar.gz"
+            ]
+        },
+        "instanceCount": {
+            "value": 2
+        },
+        "sshKeyData": {
+            "reference": {
+            "keyVault": {
+                "id": "/subscriptions/<subscriptionId>/resourceGroups/<resourceGroup>/providers/Microsoft.KeyVault/vaults/<vaultName>"
+            },
+            "secretName": "sshkey"
+            }
         }
     }
 }

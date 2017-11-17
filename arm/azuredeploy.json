@@ -132,6 +132,12 @@
             "metadata": {
                 "description": "List of blob files that are needed to boostrap the scheduler nodes."
             }
+        },
+        "sshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH rsa public key file as a string."
+            }
         }
     },
     "variables": {
@@ -174,7 +180,8 @@
         "schedulerSubnetPrefix": "10.0.1.0/24",
         "schedulerVmssName": "schedulerVmss",
         "schedulerNicName": "[concat(variables('schedulerVmssName'), 'nic')]",
-        "schedulerIpConfigName": "[concat(variables('schedulerVmssName'), 'ipconfig')]"
+        "schedulerIpConfigName": "[concat(variables('schedulerVmssName'), 'ipconfig')]",
+        "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
     },
     "resources": [
         {
@@ -338,7 +345,17 @@
                 "osProfile": {
                     "computerName": "[variables('jumpBoxName')]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "ssh": {
+                            "publicKeys": [
+                            {
+                                "path": "[variables('sshKeyPath')]",
+                                "keyData": "[parameters('sshKeyData')]"
+                            }
+                            ]
+                        }
+                    }
                 },
                 "storageProfile": {
                     "imageReference": "[variables('imageReference')]",
@@ -382,7 +399,17 @@
                 "osProfile": {
                     "computerName": "[variables('redisName')]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "ssh": {
+                            "publicKeys": [
+                            {
+                                "path": "[variables('sshKeyPath')]",
+                                "keyData": "[parameters('sshKeyData')]"
+                            }
+                            ]
+                        }
+                    }
                 },
                 "storageProfile": {
                     "imageReference": "[variables('imageReference')]",
@@ -463,7 +490,17 @@
                         "computerNamePrefix": "[variables('schedulerVmssName')]",
                         "adminUsername": "[parameters('adminUsername')]",
                         "adminPassword": "[parameters('adminPassword')]",
-                        "customData": "[parameters('vmCustomData')]"
+                        "customData": "[parameters('vmCustomData')]",
+                        "linuxConfiguration": {
+                            "ssh": {
+                                "publicKeys": [
+                                {
+                                    "path": "[variables('sshKeyPath')]",
+                                    "keyData": "[parameters('sshKeyData')]"
+                                }
+                                ]
+                            }
+                        }
                     },
                     "networkProfile": {
                         "networkInterfaceConfigurations": [
@@ -539,7 +576,17 @@
                         "computerNamePrefix": "[variables('workerVmssName')]",
                         "adminUsername": "[parameters('adminUsername')]",
                         "adminPassword": "[parameters('adminPassword')]",
-                        "customData": "[parameters('vmCustomData')]"
+                        "customData": "[parameters('vmCustomData')]",
+                        "linuxConfiguration": {
+                            "ssh": {
+                                "publicKeys": [
+                                {
+                                    "path": "[variables('sshKeyPath')]",
+                                    "keyData": "[parameters('sshKeyData')]"
+                                }
+                                ]
+                            }
+                        }
                     },
                     "networkProfile": {
                         "networkInterfaceConfigurations": [
