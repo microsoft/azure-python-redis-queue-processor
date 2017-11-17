@@ -60,7 +60,7 @@ class MetricsLogger(object):
         """
         try:
             # will create metrics storage queue if it doesn't exist
-            self.storage_service_queue.create_queue(self.config.metrics_storage)
+            self.storage_service_queue.create_queue(self.config.metrics_queue_name)
             return True
         except Exception as ex:
             self._log_exception(ex, self.init_storage.__name__)
@@ -188,17 +188,17 @@ class MetricsLogger(object):
         Iterates through all processing VMs and captures current VM metrics to storage.
         """
         # get all VMs in the resource group specififed in the config
-        vmList = self.get_vms_in_resource_group(self.config.vm_resource_group)
+        vmList = self.get_vms_in_resource_group(self.config.metrics_vm_resource_group)
 
         # iterate through each vm in the list
         for vmname in vmList:
             try:
                 # get the metrics from the Azure Metrics service for this vm
-                vmmetrics = self.get_metrics(AzureResource.vm, self.config.vm_resource_group, vmname)
+                vmmetrics = self.get_metrics(AzureResource.vm, self.config.metrics_vm_resource_group, vmname)
 
                 # write the metrics out to the storage queue
                 vmmetricsSerialized = pickle.dumps(vmmetrics)
-                self.storage_service_queue.put_message(self.config.metrics_storage, vmmetricsSerialized)
+                self.storage_service_queue.put_message(self.config.metrics_queue_name, vmmetricsSerialized)
 
             except Exception as ex:
                 self._log_exception(ex, self.capture_vm_metrics.__name__)

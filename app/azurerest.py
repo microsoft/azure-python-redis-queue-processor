@@ -45,7 +45,7 @@ class AzureRest(object):
         """
         try:
             context = adal.AuthenticationContext('https://login.microsoftonline.com/' + self.config.tenant_id)
-            token_response = context.acquire_token_with_client_credentials('https://management.core.windows.net/', self.config.client_id, self.config.client_secret)
+            token_response = context.acquire_token_with_client_credentials('https://management.core.windows.net/', self.config.service_principal_client_id, self.config.service_principal_secret)
             
             return token_response.get('accessToken')
 

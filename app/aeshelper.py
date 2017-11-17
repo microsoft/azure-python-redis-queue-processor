@@ -24,9 +24,9 @@ class AESHelper:
         """
         # Decode AES key
         wrapper = AESKeyWrapper(vault = self.config.azure_keyvault_url,
-                                client_id = self.config.azure_keyvault_client_id,
-                                secret = self.config.azure_keyvault_secret,
-                                tenant = self.config.azure_keyvault_tenant_id,
+                                client_id = self.config.service_principal_client_id,
+                                secret = self.config.service_principal_secret,
+                                tenant = self.config.tenant_id,
                                 key_name = self.config.azure_keyvault_key_name,
                                 key_version = self.config.azure_keyvault_key_version)
 
