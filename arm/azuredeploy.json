@@ -110,13 +110,13 @@
             }
         },
         "storageAccountKey": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "Storage account key where deployment resources are stored."
             }
         },
         "vmCustomData": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
               "description": "String passed down to the Virtual Machine."
             }
@@ -134,7 +134,7 @@
             }
         },
         "sshKeyData": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "SSH rsa public key file as a string."
             }

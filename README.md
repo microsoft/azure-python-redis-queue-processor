@@ -13,6 +13,7 @@ High scale parallel processing architecture in Azure based on Redis RQ and writt
 # Dev Setup
 
 ### Pyenv for multiple python versions (macOS)
+```
 brew install pyenv
 echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
 exec "$SHELL"
@@ -24,6 +25,7 @@ pyenv rehash
 cd <yourlocalpath>/azure-python-redis-queue-processor
 pyenv local 2.7.5
 python --version
+```
 
 ### Dependencies
 - [Python 2.7.5](http://https://www.python.org/download/releases/2.7.5/)
@@ -76,3 +78,102 @@ metricslogger.py captures basic metrics for all VMs in an Azure Resource Group u
 1. Retrieves a list of all VMs in an Azure Resource Group
 2. Retrieves basic metrics (CPU, disk, network) for each VM in the Resource Group
 3. Stores metrics in Azure Storage for analysis
+
+# Setup
+TODO: Add instructions for the following:
+* Create RSA Key
+* Generate AES Key
+* Encrypt data
+* Upload to Blob
+
+# Deployment
+We will be using ARM to deploy the scheduler and processing topology to Azure.
+
+0. Pre-req:
+    * Storage acccount to upload scripts, logs, and results
+    * Azure KeyVault to generate RSA Key and store ssh secrets
+    * Local AES Key to encrypt data and uploaded to blob
+
+1. Make a copy of the <i>config/config.example.json</i> and update the values appropriately
+
+    ```cp config/config.example.json config/config.json```
+
+2. Run the build script to package, encrypt, and upload the code to the Storage Account
+
+    ```sh build.sh```
+
+3. Update the <i>arm/azuredeploy.parameters.json</i> with the storage account information, custom data, and ssh keys
+    * For custom data use the value inside the <i>config/config.json.encoded</i>
+
+4. Create a resource group to deploy the topology
+
+    ```az group create -n test1 -l westus2```
+
+4. Deploy topology using ARM template
+
+    ```az group deployment create --template-file arm/azuredeploy.json --parameters arm/azuredeploy.parameters.json -g test1```
+
+# Debugging
+## How to find the custom scripts execution logs
+1. Get the jumpbox's public address on the Azure Portal or by executing the command:
+
+    ```az network public-ip list -g MyResourceGroup | grep fqdn```
+
+2. SSH into the jumpbox via password or SSH key
+
+    ```ssh adminRQ@mydomain.westus2.cloudapp.azure.com```
+
+3. Find the IP address of a scheduler or worker node. You can either look at the <b>VNET</b> in the Azure portal or use the CLI and get one for a specific instance. Ex: instance "3" of the worker VMSS
+
+    ```az vmss nic list-vm-nics -g MyResourceGroup --vmss-name workerVmss --instance-id 3 | grep privateIpAddress```
+
+4. SSH into one of those nodes
+
+    ```ssh adminBR@10.0.2.7```
+
+5. You need admin access to navigate to the custom scripts folder
+
+    ```sudo -s```
+
+6. Navigate to where ther custom script jobs are executed. Ex: execution "1"
+
+    ```cd /var/lib/waagent/custom-script/download/1/```
+
+7. You can look at the "stderr" and "stdout" log files to help debug what happened during deployment.
+
+## How to view the logs of a background task
+1. SSH into the desired box
+2. Find the process identifier (PID)
+
+    ```ps -aux | grep python```
+
+3. You can view the logs for the process by doing the following 
+    
+    ```cat /proc/<PID>/fd/2```
+
+## Remote in via SSH Keys
+1. Copy the SSH private key to jumpbox
+
+    ```scp -i ~/.ssh/mykey_id_rsa ~/.ssh/mykey_id_rsa admin@public-ip.westus2.cloudapp.azure.com:~/.ssh/id_rsa```
+
+2. Remote into the Jumpbox
+
+    ```ssh admin@public-ip.westus2.cloudapp.azure.com -i ~/.ssh/mykey_id_rsa```
+
+3. Now you can remote to other nodes without needing to provide a password.
+
+## Explore Redis Cache via Docker
+1. Make sure your container is up and then on another shell you can exec and attach to the redis cli.
+
+    ```docker exec -it redis redis-cli```
+
+2. Once attached you can perform actions such as "List All Keys"
+
+    ```127.0.0.1:6379> KEYS *```
+
+# FAQ
+## How to assign a role to a service principal?
+1. Get the applicationId of the service principal.
+2. Execute the following command, passing the role you want to assign to the service principal 
+
+    ```az role assignment create --assignee <SP Application Id> --role <Reader, Contribtor,...>```
