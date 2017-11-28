@@ -1,6 +1,7 @@
 import logging
 import uuid
 import time
+import socket
 from results import Results
 
 logger = logging.getLogger(__name__)

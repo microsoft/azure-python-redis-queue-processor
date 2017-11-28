@@ -1,3 +1,10 @@
+"""
+Azurerest.py creates HTTP requests with Azure user agent and access token headers to enable easy communication with Azure APIs.
+
+module deps:
+pip install adal
+pip install requests
+"""
 import platform
 import requests
 import adal
@@ -13,6 +20,7 @@ class AzureRest(object):
         Constructor
         """
         self.config = Config()
+        self.logger = logger
     
     def _log_exception(self, exception, functionName):
         """
