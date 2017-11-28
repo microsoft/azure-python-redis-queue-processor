@@ -3,10 +3,18 @@
 """
 import base64
 import io
-import sys
+import json
 from app.aeshelper import AESHelper
 from app.config import Config
 from azure.storage.blob import BlockBlobService
+
+class Record(object):
+    def __init__(self, id, data):
+        self.id = id
+        self.data = data
+
+def as_payload(dct):
+    return Record(dct['id'], dct['data'])
 
 if __name__ == "__main__":
     config = Config()
@@ -23,8 +31,9 @@ if __name__ == "__main__":
 
         for result in blobContents.readlines():
             decoded = aes_cipher.decrypt(base64.b64decode(result))
-            print 'encoded: ' + result + ' decoded: '  + decoded
-            results.append(decoded)
+            record = json.loads(decoded, object_hook = as_payload)
+            print str(record.id) + " " + str(len(record.data) / 1024) + "KB"
+            results.append(record.id)
 
     results.sort()
     print results

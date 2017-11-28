@@ -8,13 +8,12 @@ from app.aescipher import AESCipher
 from app.aeshelper import AESHelper
 from app.aeskeywrapper import AESKeyWrapper
 from app.config import Config
-config = Config("app/config.json")
+config = Config()
 
 script_filename = "app/scheduler.py"
 script_encrypted_filename = os.path.join(config.encrypted_files_folder, config.encrypted_scheduler_script_filename)
 aes_key_encrypted_filename = os.path.join(config.encrypted_files_folder, config.encrypted_aes_key_filename)
 encrypted_record_file = os.path.join(config.encrypted_files_folder, config.encrypted_data_filename)
-number_of_records = 100
 
 wrapper = AESKeyWrapper(vault = config.azure_keyvault_url,
                         client_id = config.service_principal_client_id,
@@ -49,7 +48,7 @@ print script_filename + " encrypted and saved to " + script_encrypted_filename
 
 # Encrypt data
 data_generator = DataGenerator(config)
-data_generator.generate_data(number_of_records, os.path.join(config.encrypted_files_folder, "data.encrypted"))
+data_generator.generate_data(config.number_of_records, config.size_of_record_kb, os.path.join(config.encrypted_files_folder, config.encrypted_data_filename))
 
 print "Generated encrypted records file stored at: " + encrypted_record_file
 
