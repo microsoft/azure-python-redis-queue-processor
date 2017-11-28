@@ -108,3 +108,4 @@ app/cpp/program
 docker-env
 config.json.encoded
 config.json
+*.encrypted
