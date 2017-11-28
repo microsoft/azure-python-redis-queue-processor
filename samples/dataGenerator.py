@@ -11,12 +11,10 @@ class Record(object):
     data = ""
 
     def __init__(self, size):
-        self.id = id
         self._initData(size)
 
     def _initData(self, size):
-        for i in range(size * 1024):
-            self.data += "A"
+        self.data = "A" * size * 1024
 
 class DataGenerator(object):
 
@@ -28,7 +26,7 @@ class DataGenerator(object):
 
         record = Record(size_of_record_kb)
 
-        with open(out_file_path, 'wb+') as out_file:
+        with open(out_file_path, 'w+') as out_file:
             for recordId in range(number_of_records):
                 record.id = recordId              
                 encrypted_record = self.aes_cipher.encrypt(json.dumps(record.__dict__))
