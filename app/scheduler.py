@@ -1,5 +1,6 @@
 """
-Scheduler.py will read a data file, format it, and then enqueue jobs for each record into Redis Q
+Scheduler.py will read a data file, format it, and then enqueue jobs for each record into Redis Q. Once all jobs have been queued, scheduler 
+creates a loop to capture VM health metrics and validates current job processing state until all processing has been completed.
 
 module deps:
 pip install rq
@@ -17,6 +18,7 @@ from rq import Queue, Connection
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
 from jobstatus import JobStatus, JobState
+from metricslogger import MetricsLogger
 
 LOGGER = logging.getLogger(__name__)
 
@@ -128,3 +130,12 @@ if __name__ == "__main__":
             'result' : job.result
         }
         print(jobinfo)
+
+    # Create an instance of MetricsLogger to begin capturing VM metrics
+    METRICSLOGGER = MetricsLogger(LOGGER)
+
+    # Capture VM metrics while this service is running
+    while(True):
+        METRICSLOGGER.capture_vm_metrics()
+        # TODO: Implement validator.processing_completed function to break loop when done
+        time.sleep(300)

@@ -6,6 +6,8 @@ pip install azure-storage
 pip install azure-keyvault
 pip install cryptography
 pip install rq
+pip install adal
+pip install requests
 
 WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 

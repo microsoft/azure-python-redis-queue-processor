@@ -1,3 +1,10 @@
+"""
+Metricslogger.py captures metrics (CPU, network, disk) with a one-minute frequency. Metrics are captured for all VMs in the resource group 
+defined in config.metrics_vm_resource_group. Metrics are written out to Azure Storage for retrieval by monitoring systems.
+
+module deps:
+pip install azure-storage
+"""
 import logging
 import pickle
 import socket
@@ -29,6 +36,8 @@ class MetricsLogger(object):
 
         if(self.init_storage() is False):
             raise Exception("Errors occured validating metrics table exists.")
+
+        self.logger.info('Running Metrics Logger')
 
     def init_storage_service(self):
         """
