@@ -14,7 +14,7 @@ from app.aeshelper import AESHelper
 config = Config('config/config.json')
 
 encrypted_aes_key_filename = "data/aes.encrypted"
-encrypted_script_filename = config.encrypted_files_folder + "/" + config.encrypted_scheduler_script_filename
+encrypted_script_filename = os.path.join(config.encrypted_files_folder, config.encrypted_scheduler_script_filename)
 
 files_to_encrypt = [
     "app/scheduler.py"

@@ -53,7 +53,7 @@ def processing_job(encryptedRecord, redisHost, redisPort):
     aes_cipher = _create_aes_cipher()
 
     # decrypt the data to be processed
-    record = int(aes_cipher.decrypt(base64.b64decode(encryptedRecord)))
+    record = aes_cipher.decrypt(base64.b64decode(encryptedRecord))
 
     # similuate CPU intensive process for 1 second
     start = datetime.utcnow()
@@ -64,7 +64,7 @@ def processing_job(encryptedRecord, redisHost, redisPort):
 
     # write out the results
     results = Results(LOGGER, redisHost, redisPort)
-    results.write_result(job.id, str(record))
+    results.write_result(job.id, record)
 
     # update the job status record
     jobstatus = JobStatus(LOGGER, redisHost, redisPort)
