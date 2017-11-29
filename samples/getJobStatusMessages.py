@@ -1,3 +1,7 @@
+"""
+This script will pull messages from the Job Status Queue and print out the messages that show total status.
+"""
+
 from app.config import Config
 from azure.storage.queue import QueueService
 import sys
