@@ -130,7 +130,10 @@ if __name__ == "__main__":
     init_logging()
 
     ARGS = parse_args()
-
-    LOGGER.info('Running Validator Sample')
-    VALIDATOR = Validator(LOGGER, ARGS.redisHost, ARGS.redisPort)
-    VALIDATOR.run()
+    while True:
+        LOGGER.info('Running Validator Sample')
+        VALIDATOR = Validator(LOGGER, ARGS.redisHost, ARGS.redisPort)
+        VALIDATOR.run()
+        
+        LOGGER.info('Sleeping for 15 seconds')
+        time.sleep(15)

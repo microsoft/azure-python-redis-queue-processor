@@ -123,15 +123,9 @@ class Results(object):
 
             # update the consolidated results count in Redis, we do this per iteration of the loop so if
             # this process / VM fails during consolidation we still have an accurate count
+            self.storage_service_cache.incr(self.config.results_consolidated_count_redis_key)
             totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
-            if(totalConsolidatedResults == None):
-                totalConsolidatedResults = 0
-
-            # change the redis total results value to an int
-            total = int(totalConsolidatedResults)
-            total += 1
-            self.logger.info("Results consolidated: " + str(total))
-            self.storage_service_cache.set(self.config.results_consolidated_count_redis_key, total)
+            self.logger.info("Results consolidated: " + str(totalConsolidatedResults))
 
         except Exception as ex:
             self.log_exception(ex, self.consolidate_results.__name__ + " - Error consolidating result blob.")
@@ -176,6 +170,13 @@ class Results(object):
 
             # write the count of results we consolidated out to queue to provide status
             self.storage_service_queue.put_message(self.config.job_status_queue_name, str(resultsConsolidated) + " results consolidated.")
+
+            # log out total job status
+            totalScheduledJobs = self.storage_service_cache.get(self.config.scheduled_jobs_count_redis_key)
+            totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
+            statusMessage = "Total: "+ totalConsolidatedResults + "/" + totalScheduledJobs + " jobs have been successfully processed and consolidated."
+            self.logger.info(statusMessage)
+            self.storage_service_queue.put_message(self.config.job_status_queue_name, statusMessage)
 
             return resultsConsolidated
 
