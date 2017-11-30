@@ -113,13 +113,15 @@ def parse_args():
     return parser.parse_args()
 
 def init(args):
-    LOGGER.info('Running Processor Sample')
+    LOGGER.info('Running Processor - Fork')
     PROCESSOR = Processor(LOGGER, args.redisHost, args.redisPort, args.queues, args.aesKeyFilePath)
     PROCESSOR.run()
 
 if __name__ == "__main__":
     # init logging
     init_logging()
+    
+    LOGGER.info('Running Processor - Main')
 
     commandLineArgs = parse_args()
     # Fork process

@@ -19,6 +19,7 @@ from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
 from jobstatus import JobStatus, JobState
 from metricslogger import MetricsLogger
+from validator import Validator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -84,6 +85,9 @@ class Scheduler(object):
                     count += 1
                     jobs.append(job)
 
+        # Store number of jobs queued to Redis
+        redis_conn.incrby(self.config.scheduled_jobs_count_redis_key, count)
+
         self.logger.info('%d jobs queued', count)
 
         return jobs
@@ -117,25 +121,25 @@ if __name__ == "__main__":
     ARGS = parse_args()
     print(ARGS)
 
-    LOGGER.info('Running Scheduler Sample')
+    LOGGER.info('Running Scheduler - Main')
     # start program
     SCHEDULER = Scheduler(LOGGER, ARGS.redisHost, ARGS.redisPort)
     JOBS = SCHEDULER.run(ARGS.dataFilePath)
 
-    time.sleep(5)
-    for job in JOBS:
-        jobinfo = {
-            'id': job.id,
-            'status' : job.status,
-            'result' : job.result
-        }
-        print(jobinfo)
-
-    # Create an instance of MetricsLogger to begin capturing VM metrics
+    # create an instance of MetricsLogger to begin capturing VM metrics
     METRICSLOGGER = MetricsLogger(LOGGER)
 
-    # Capture VM metrics while this service is running
+    # create an instance of the validator to consolidate and validate results
+    VALIDATOR = Validator(LOGGER, ARGS.redisHost, ARGS.redisPort)
+
+    # capture VM metrics while this service is running
     while(True):
+        LOGGER.info("Capturing metrics...")
         METRICSLOGGER.capture_vm_metrics()
-        # TODO: Implement validator.processing_completed function to break loop when done
-        time.sleep(300)
+        
+        STATUS = VALIDATOR.run()
+        if STATUS == 1.0:
+            LOGGER.info('All jobs are completed.')
+            break
+
+        time.sleep(15)

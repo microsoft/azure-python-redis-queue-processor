@@ -26,6 +26,7 @@
     "metrics_vm_resource_group": "",
     "logger_queue_name": "stdout",
     "logger_queue_sas": "",
+    "scheduled_jobs_count_redis_key": "totalScheduledJobsCount",
     "results_container_name": "results",
     "results_consolidated_file": "allresults.txt",
     "results_consolidated_count_redis_key": "consolidatedResultsCount",

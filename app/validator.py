@@ -77,6 +77,8 @@ class Validator(object):
     def run(self):
         """
         Execute the validator - get all jobs in process and validate their state
+        
+        :return float perc: returns the percentage of jobs consolidated
         """
         self.logger.info('Validator using redis host: %s:%s', self.redis_host, self.redis_port)
 
@@ -104,6 +106,12 @@ class Validator(object):
         # consolidate any completed results
         self.results.consolidate_results()
 
+        perc = self.results.get_total_jobs_completion_status()
+
+        self.logger.info("Jobs Completed (%): {0:.2f}".format(perc))
+
+        return perc
+
 def init_logging():
     """
     Initialize the logger
@@ -130,7 +138,15 @@ if __name__ == "__main__":
     init_logging()
 
     ARGS = parse_args()
-
-    LOGGER.info('Running Validator Sample')
-    VALIDATOR = Validator(LOGGER, ARGS.redisHost, ARGS.redisPort)
-    VALIDATOR.run()
+    while True:
+        LOGGER.info('Running Validator Sample')
+        VALIDATOR = Validator(LOGGER, ARGS.redisHost, ARGS.redisPort)
+        
+        # Run the validator until all jobs are completed
+        STATUS = VALIDATOR.run()
+        if STATUS == 1.0:
+            LOGGER.info('All jobs are completed.')
+            break
+        
+        LOGGER.info('Sleeping for 15 seconds')
+        time.sleep(15)

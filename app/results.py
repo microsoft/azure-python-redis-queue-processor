@@ -123,15 +123,9 @@ class Results(object):
 
             # update the consolidated results count in Redis, we do this per iteration of the loop so if
             # this process / VM fails during consolidation we still have an accurate count
+            self.storage_service_cache.incr(self.config.results_consolidated_count_redis_key)
             totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
-            if(totalConsolidatedResults == None):
-                totalConsolidatedResults = 0
-
-            # change the redis total results value to an int
-            total = int(totalConsolidatedResults)
-            total += 1
-            self.logger.info("Results consolidated: " + str(total))
-            self.storage_service_cache.set(self.config.results_consolidated_count_redis_key, total)
+            self.logger.info("Results consolidated: " + str(totalConsolidatedResults))
 
         except Exception as ex:
             self.log_exception(ex, self.consolidate_results.__name__ + " - Error consolidating result blob.")
@@ -182,3 +176,21 @@ class Results(object):
         except Exception as ex:
             self.log_exception(ex, self.consolidate_results.__name__)
             return resultsConsolidated
+
+    def get_total_jobs_completion_status(self):
+        """
+        Write out the the current state of the workload; the percentage of jobs that are completed
+        "return: float status: percentage of completed jobs
+        """
+        # log out total job status
+        total_scheduled_jobs = self.storage_service_cache.get(self.config.scheduled_jobs_count_redis_key)
+        total_consolidated_results = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
+        
+        if total_consolidated_results is None:
+            total_consolidated_results = "0"
+
+        status_message = "Total: "+ total_consolidated_results + "/" + total_scheduled_jobs + " jobs have been successfully processed and consolidated."
+        self.logger.info(status_message)
+        self.storage_service_queue.put_message(self.config.job_status_queue_name, status_message)
+
+        return float(total_consolidated_results) / int(total_scheduled_jobs)
