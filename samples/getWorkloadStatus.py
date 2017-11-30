@@ -10,7 +10,9 @@ import time
 LOG_EVENT_MSGS = [
     "Running Scheduler - Main",
     "Running Processor - Main",
-    "Running Processor - Fork"
+    "Running Processor - Fork",
+    "Jobs Completed (%): ",
+    "All jobs are completed."
 ]
 
 RESULTS_EVENT_MSG = "Total: "

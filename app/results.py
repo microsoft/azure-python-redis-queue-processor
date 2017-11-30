@@ -171,15 +171,26 @@ class Results(object):
             # write the count of results we consolidated out to queue to provide status
             self.storage_service_queue.put_message(self.config.job_status_queue_name, str(resultsConsolidated) + " results consolidated.")
 
-            # log out total job status
-            totalScheduledJobs = self.storage_service_cache.get(self.config.scheduled_jobs_count_redis_key)
-            totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
-            statusMessage = "Total: "+ totalConsolidatedResults + "/" + totalScheduledJobs + " jobs have been successfully processed and consolidated."
-            self.logger.info(statusMessage)
-            self.storage_service_queue.put_message(self.config.job_status_queue_name, statusMessage)
-
             return resultsConsolidated
 
         except Exception as ex:
             self.log_exception(ex, self.consolidate_results.__name__)
             return resultsConsolidated
+
+    def get_total_jobs_completion_status(self):
+        """
+        Write out the the current state of the workload; the percentage of jobs that are completed
+        "return: float status: percentage of completed jobs
+        """
+        # log out total job status
+        total_scheduled_jobs = self.storage_service_cache.get(self.config.scheduled_jobs_count_redis_key)
+        total_consolidated_results = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
+        
+        if total_consolidated_results is None:
+            total_consolidated_results = "0"
+
+        status_message = "Total: "+ total_consolidated_results + "/" + total_scheduled_jobs + " jobs have been successfully processed and consolidated."
+        self.logger.info(status_message)
+        self.storage_service_queue.put_message(self.config.job_status_queue_name, status_message)
+
+        return float(total_consolidated_results) / int(total_scheduled_jobs)

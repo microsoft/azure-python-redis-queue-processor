@@ -136,5 +136,10 @@ if __name__ == "__main__":
     while(True):
         LOGGER.info("Capturing metrics...")
         METRICSLOGGER.capture_vm_metrics()
-        VALIDATOR.run()
+        
+        STATUS = VALIDATOR.run()
+        if STATUS == 1.0:
+            LOGGER.info('All jobs are completed.')
+            break
+
         time.sleep(15)
