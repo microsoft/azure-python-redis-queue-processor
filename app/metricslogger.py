@@ -114,6 +114,30 @@ class MetricsLogger(object):
         }
         return switch.get(azureResource, None)
 
+    def buildAzureMetricsBaseUri(self, resourceGroup, resourceProvider, resourceType, resourceName):
+        """
+        Builds a base Azure Metrics API URI
+
+        :param str resourceGroup: The Azure Resource Group to use in the URI
+        :param str resourceProvider: The Azure Resource Provider to use in the URI
+        :param str resourceType: The Azure Resource Type to use in the URI
+        :param str resourceName: The Azure Resource name to use in the URI
+        :return: Base Azure Metrics API URI
+        :rtype: str
+        """
+        # build the base Microsoft Azure REST uri
+        baseUri = ''.join(['https://management.azure.com',
+                    '/subscriptions/', self.config.subscription_id,
+                    '/resourceGroups/', resourceGroup,
+                    '/providers/', resourceProvider,
+                    '/', resourceType])
+        
+        # add a specific resource name to the URI if we received one
+        if(resourceName is not None):
+            baseUri = baseUri + '/' + resourceName
+
+        return baseUri
+
     def get_vms_in_resource_group(self, resourceGroup):
         """
         Calls Azure to get a list of VMs in a resource group
@@ -139,9 +163,8 @@ class MetricsLogger(object):
 
             if(vmList is not None):
                 # iterate through the list of vms and build a string array of vm names
-                for item in vmList.viewitems():
-                    value = item[0], item[1]
-                    vmName = value[1][0]['name']
+                for item in vmList['value']:
+                    vmName = item['name']
                     #vmName is unicode encoded, so we need to get the string
                     if(vmName is not None):
                         vmListArray.append(vmName.encode("utf-8"))
@@ -152,33 +175,55 @@ class MetricsLogger(object):
 
         return vmListArray
 
-    def buildAzureMetricsBaseUri(self, resourceGroup, resourceProvider, resourceType, resourceName):
+    def get_vmss_in_resource_group(self, resourceGroup):
         """
-        Builds a base Azure Metrics API URI
+        Calls Azure to get a list of VM Scale Sets in a resource group
 
-        :param str resourceGroup: The Azure Resource Group to use in the URI
-        :param str resourceProvider: The Azure Resource Provider to use in the URI
-        :param str resourceType: The Azure Resource Type to use in the URI
-        :param str resourceName: The Azure Resource name to use in the URI
-        :return: Base Azure Metrics API URI
-        :rtype: str
+        :param str resourceGroup: The Azure Resource Group containing the VMSS to list
+        :return: Array of VM Scale Set names
+        :rtype: Array[str]
         """
-        # build the base Microsoft Azure REST uri
-        baseUri = ''.join(['https://management.azure.com',
-                    '/subscriptions/', self.config.subscription_id,
-                    '/resourceGroups/', resourceGroup,
-                    '/providers/', resourceProvider,
-                    '/', resourceType])
-        
-        # add a specific resource name to the URI if we received one
-        if(resourceName is not None):
-            baseUri = baseUri + '/' + resourceName
+        vmssListArray = []
 
-        return baseUri
+        try:
+            # get the resource provider and resource type we need for the URI
+            resourceProvider = self.resource_provider_lookup(AzureResource.vm_scale_set)
+            resourceType = self.resource_type_lookup(AzureResource.vm_scale_set)
+
+            # build the full Microsoft Azure REST uri
+            baseUri = self.buildAzureMetricsBaseUri(resourceGroup, resourceProvider, resourceType, None)
+            uri = baseUri + "?api-version=2017-03-30"
+            #https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/VirtualMachineScaleSets?api-version={apiVersion}
+
+            # execute the HTTP GET request and capture the response
+            vmssList = self.azure_rest.http_get(uri)
+
+            if(vmssList is not None):
+                # iterate through the list of vms and build a string array of vm names
+                for item in vmssList['value']:
+                    vmssName = item['name']
+                    #vmName is unicode encoded, so we need to get the string
+                    if(vmssName is not None):
+                        vmssListArray.append(vmssName.encode("utf-8"))
+
+        except Exception as ex:
+            self._log_exception(ex, self.get_vmss_in_resource_group.__name__)
+            return False
+
+        return vmssListArray
+
+    def write_metrics_to_storage(self, metrics):
+        """
+        Handles serialization and writing metrics out to storage.
+
+        :param Object metrics: json metrics object
+        """
+        metricsSerialized = pickle.dumps(metrics)
+        self.storage_service_queue.put_message(self.config.metrics_queue_name, metricsSerialized)
 
     def get_metrics(self, azureResource, resourceGroup, resourceName):
         """
-        Get metrics using the Microsoft Insights Azure metrics service for a resource
+        Get metrics using the Microsoft Insights Azure metrics service for a resource.
 
         :param Enum azureResource: The Azure Resource to retrieve metrics for
         :param str resourceGroup: The Azure Resource Group to retrieve metrics for
@@ -195,6 +240,8 @@ class MetricsLogger(object):
     def capture_vm_metrics(self):
         """
         Iterates through all processing VMs and captures current VM metrics to storage.
+
+        *** This does not capture individual VM metrics for VM instances in a VM Scale Set.
         """
         # get all VMs in the resource group specififed in the config
         vmList = self.get_vms_in_resource_group(self.config.metrics_vm_resource_group)
@@ -206,8 +253,27 @@ class MetricsLogger(object):
                 vmmetrics = self.get_metrics(AzureResource.vm, self.config.metrics_vm_resource_group, vmname)
 
                 # write the metrics out to the storage queue
-                vmmetricsSerialized = pickle.dumps(vmmetrics)
-                self.storage_service_queue.put_message(self.config.metrics_queue_name, vmmetricsSerialized)
+                self.write_metrics_to_storage(vmmetrics)
 
             except Exception as ex:
                 self._log_exception(ex, self.capture_vm_metrics.__name__)
+
+    def capture_vmss_metrics(self):
+        """
+        Uses Azure Metrics API to capture VM Scale Set metrics (average of CPU, network and disk usage across VM instances) to storage.
+        """
+        try:
+            # get the list of VM Scale Sets in the resource group
+            vmssList = self.get_vmss_in_resource_group(self.config.metrics_vm_resource_group)
+
+            # iterate through each vmss to capture the metrics for each
+            for vmssName in vmssList:
+
+                # get the metrics from the vmss
+                vmssMetrics = self.get_metrics(AzureResource.vm_scale_set, self.config.metrics_vm_resource_group, vmssName)
+
+                # write the metrics out to the storage queue
+                self.write_metrics_to_storage(vmssMetrics)
+
+        except Exception as ex:
+                self._log_exception(ex, self.capture_vmss_metrics.__name__)
