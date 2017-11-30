@@ -121,7 +121,7 @@ if __name__ == "__main__":
     ARGS = parse_args()
     print(ARGS)
 
-    LOGGER.info('Running Scheduler Sample')
+    LOGGER.info('Running Scheduler - Main')
     # start program
     SCHEDULER = Scheduler(LOGGER, ARGS.redisHost, ARGS.redisPort)
     JOBS = SCHEDULER.run(ARGS.dataFilePath)
