@@ -138,79 +138,49 @@ class MetricsLogger(object):
 
         return baseUri
 
-    def get_vms_in_resource_group(self, resourceGroup):
+    def get_resources_in_resource_group(self, resourceGroup, azureResource):
         """
-        Calls Azure to get a list of VMs in a resource group
+        Calls Azure to get a list of resources in a resource group.
 
-        :param str resourceGroup: The Azure Resource Group containing the VMs to list
-        :return: Array of vm names
+        :param str resourceGroup: The Azure Resource Group containing the resources to list
+        :param AzureResource azureResource: The type of Azure resource to get
+        :return: Array of resource names
         :rtype: Array[str]
         """
-        vmListArray = []
+        resourceArray = []
 
         try:
             # get the resource provider and resource type we need for the URI
-            resourceProvider = self.resource_provider_lookup(AzureResource.vm)
-            resourceType = self.resource_type_lookup(AzureResource.vm)
+            resourceProvider = None
+            resourceType = None
+            if(azureResource == AzureResource.vm_scale_set):
+                resourceProvider = self.resource_provider_lookup(AzureResource.vm_scale_set)
+                resourceType = self.resource_type_lookup(AzureResource.vm_scale_set)
+            
+            if(azureResource == AzureResource.vm):
+                resourceProvider = self.resource_provider_lookup(AzureResource.vm)
+                resourceType = self.resource_type_lookup(AzureResource.vm)
 
             # build the full Microsoft Azure REST uri
             baseUri = self.buildAzureMetricsBaseUri(resourceGroup, resourceProvider, resourceType, None)
             uri = baseUri + "?api-version=2017-03-30"
-            #https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/virtualmachines?api-version={apiVersion}
 
             # execute the HTTP GET request and capture the response
-            vmList = self.azure_rest.http_get(uri)
+            resourceList = self.azure_rest.http_get(uri)
 
-            if(vmList is not None):
+            if(resourceList is not None):
                 # iterate through the list of vms and build a string array of vm names
-                for item in vmList['value']:
-                    vmName = item['name']
+                for item in resourceList['value']:
+                    resourceName = item['name']
                     #vmName is unicode encoded, so we need to get the string
-                    if(vmName is not None):
-                        vmListArray.append(vmName.encode("utf-8"))
+                    if(resourceName is not None):
+                        resourceArray.append(resourceName.encode("utf-8"))
 
         except Exception as ex:
-            self._log_exception(ex, self.get_vms_in_resource_group.__name__)
+            self._log_exception(ex, self.get_resources_in_resource_group.__name__)
             return False
 
-        return vmListArray
-
-    def get_vmss_in_resource_group(self, resourceGroup):
-        """
-        Calls Azure to get a list of VM Scale Sets in a resource group
-
-        :param str resourceGroup: The Azure Resource Group containing the VMSS to list
-        :return: Array of VM Scale Set names
-        :rtype: Array[str]
-        """
-        vmssListArray = []
-
-        try:
-            # get the resource provider and resource type we need for the URI
-            resourceProvider = self.resource_provider_lookup(AzureResource.vm_scale_set)
-            resourceType = self.resource_type_lookup(AzureResource.vm_scale_set)
-
-            # build the full Microsoft Azure REST uri
-            baseUri = self.buildAzureMetricsBaseUri(resourceGroup, resourceProvider, resourceType, None)
-            uri = baseUri + "?api-version=2017-03-30"
-            #https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/VirtualMachineScaleSets?api-version={apiVersion}
-
-            # execute the HTTP GET request and capture the response
-            vmssList = self.azure_rest.http_get(uri)
-
-            if(vmssList is not None):
-                # iterate through the list of vms and build a string array of vm names
-                for item in vmssList['value']:
-                    vmssName = item['name']
-                    #vmName is unicode encoded, so we need to get the string
-                    if(vmssName is not None):
-                        vmssListArray.append(vmssName.encode("utf-8"))
-
-        except Exception as ex:
-            self._log_exception(ex, self.get_vmss_in_resource_group.__name__)
-            return False
-
-        return vmssListArray
+        return resourceArray
 
     def write_metrics_to_storage(self, metrics):
         """
@@ -244,7 +214,7 @@ class MetricsLogger(object):
         *** This does not capture individual VM metrics for VM instances in a VM Scale Set.
         """
         # get all VMs in the resource group specififed in the config
-        vmList = self.get_vms_in_resource_group(self.config.metrics_vm_resource_group)
+        vmList = self.get_resources_in_resource_group(self.config.metrics_vm_resource_group, AzureResource.vm)
 
         # iterate through each vm in the list
         for vmname in vmList:
@@ -264,7 +234,7 @@ class MetricsLogger(object):
         """
         try:
             # get the list of VM Scale Sets in the resource group
-            vmssList = self.get_vmss_in_resource_group(self.config.metrics_vm_resource_group)
+            vmssList = self.get_resources_in_resource_group(self.config.metrics_vm_resource_group, AzureResource.vm_scale_set)
 
             # iterate through each vmss to capture the metrics for each
             for vmssName in vmssList:
