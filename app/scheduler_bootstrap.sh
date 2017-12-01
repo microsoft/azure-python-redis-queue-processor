@@ -8,14 +8,9 @@ pip install cryptography
 pip install rq
 pip install adal
 pip install requests
+pip install futures
 
-WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-tar -xzf app.tar.gz -C $WORKDIR
-
-touch $HOME/crontab
-($HOME/crontab -l | echo "* * * * * python $WORKDIR/validator.py --redisHost $1 --redisPort 6379 >/dev/null 2>&1") | $HOME/crontab -
-sudo /bin/systemctl start crond.service
+tar -xzf app.tar.gz
 
 python app/schedulerconfiguration.py
 python app/scheduler-unencrypted.py data/data.encrypted --redisHost $1 --redisPort 6379 2>&1 | python app/queuelogger.py

@@ -33,7 +33,8 @@ class Workload(object):
     def get_events(self):
         print "Getting Relevant Workload Events"
         while True:
-            messages = self.log_queue_service.get_messages(self.config.logger_queue_name, 32)
+            # Setting message visibility to 2 days, so that the message won't get processed again
+            messages = self.log_queue_service.get_messages(self.config.logger_queue_name, 32, visibility_timeout=60*60*24*2)
             for msg in messages:
                 content = str(msg.content)
                 event = None    
@@ -64,14 +65,15 @@ class Workload(object):
                     self.jobCompletionEvents.append(event)
 
                 if event is not None:
-                    print str(event.time_stamp) + " " + event.contents     
+                    print str(event.time_stamp) + " " + event.contents
 
             # Stop when the workload is completed    
             if self.workloadCompleteEvent is not None and self.schedulerStartEvent is not None:
                 break
 
-            # Sleeping to avoid spamming
-            if not messages: 
+            # Sleeping to avoid spamming if the queue is empty
+            if not messages:
+                print "Empty queue. Sleeping for 30 seconds..."
                 time.sleep(30)
     
     def print_summary(self):
