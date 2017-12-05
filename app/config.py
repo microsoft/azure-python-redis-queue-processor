@@ -19,6 +19,7 @@ class Config(object):
     redis_port = 6379,
     redis_host = "localhost"
     number_of_records = 100
+    result_consolidation_size = 10
     size_of_record_kb = 1
     job_processing_max_time_sec = 60,
     azure_keyvault_url = ""

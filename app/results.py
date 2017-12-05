@@ -10,8 +10,6 @@ from config import Config
 from aescipher import AESCipher
 from aeshelper import AESHelper
 
-RESULT_CONSOLIDATION_SIZE = 10
-
 class Results(object):
     """
     Handles interacting with encrypted results in blob storage.
@@ -123,8 +121,8 @@ class Results(object):
 
             result_messages = []
             with io.BytesIO() as consolidated_result:
-                while len(result_messages) < RESULT_CONSOLIDATION_SIZE:
-                    messages = self.results_queue_service.get_messages(self.config.results_queue_name, min(RESULT_CONSOLIDATION_SIZE, 32))
+                while len(result_messages) < self.config.result_consolidation_size:
+                    messages = self.results_queue_service.get_messages(self.config.results_queue_name, min(self.config.result_consolidation_size, 32))
                     
                     # If the queue is empty, stop and consolidate
                     if not messages:
