@@ -15,7 +15,8 @@ if __name__ == "__main__":
         (config.job_status_queue_name, config.job_status_queue_sas_token),
         (config.logger_queue_name, config.logger_queue_sas), 
         (config.metrics_queue_name, config.metrics_sas_token),
-        (config.results_queue_name, config.results_queue_sas_token)
+        (config.results_queue_name, config.results_queue_sas_token),
+        (config.workload_tracker_queue_name, config.workload_tracker_sas_token)
     ]
 
     print "Clearing all queues"

@@ -2,104 +2,103 @@
 This script will pull messages from the Job Status Queue and print out the messages that show total status.
 """
 
-from app.config import Config
-from azure.storage.queue import QueueService
 from datetime import datetime
-import sys
+import json
 import time
-
-SCHEDULER_START = "Running Scheduler - Main"
-PROCESSOR_START = "Running Processor - Main"
-PROCESSOR_FORK_START = "Running Processor - Fork"
-JOB_STATUS = "Jobs Completed (%):"
-WORKLOAD_DONE_MSG = "All jobs are completed."
+from app.config import Config
+from app.workloadTracker import WorkloadEventType, WorkloadEvent
+from azure.storage.queue import QueueService
 
 class WorkloadEvent(object):
-    def __init__(self, event_name, time_stamp, contents):
-        self.event_name = event_name
-        self.time_stamp = time_stamp
+    def __init__(self, event_type, timestamp, contents):
+        self.event_type = event_type
+        self.timestamp = timestamp
         self.contents = contents
 
 class Workload(object):
+
     def __init__(self, config):
-        self.workloadCompleteEvent = None
-        self.schedulerStartEvent = None
         self.config = config
         self.log_queue_service = QueueService(account_name=self.config.storage_account_name,
-                sas_token=self.config.logger_queue_sas)
-        self.processorEvents = []
-        self.processorForkEvents = []
-        self.jobCompletionEvents = []
-
-    def get_time(self, msg):
-        return datetime.strptime(msg.content[:msg.content.index(',')], '%Y-%m-%d %H:%M:%S')
+                sas_token=self.config.workload_tracker_sas_token)
+        self.workload_complete_event = None
+        self.scheduler_start_event = None
+        self.processor_events = []
+        self.processor_fork_events = []
+        self.job_consolidation_status_events = []
+        self.job_processing_status_events = []
 
     def get_events(self):
         print "Getting Relevant Workload Events"
         while True:
             # Setting message visibility to 2 days, so that the message won't get processed again
-            messages = self.log_queue_service.get_messages(self.config.logger_queue_name, 32)
+            messages = self.log_queue_service.get_messages(self.config.workload_tracker_queue_name, 32)
             for msg in messages:
-                content = str(msg.content)
-                event = None    
+                parsed = json.loads(msg.content)
+                event = WorkloadEvent(WorkloadEventType(parsed["event_type"]), msg.insertion_time, parsed["content"])  
 
                 # Workload Completed
-                if WORKLOAD_DONE_MSG in content:
-                    event = WorkloadEvent(WORKLOAD_DONE_MSG, self.get_time(msg), msg.content)
-                    self.workloadCompleteEvent = event
+                if event.event_type == WorkloadEventType.WORKLOAD_DONE:
+                    self.workload_complete_event = event
 
                 # Scheduler - Main Start
-                if SCHEDULER_START in content:
-                    event = WorkloadEvent(SCHEDULER_START, self.get_time(msg), msg.content)
-                    self.schedulerStartEvent = event
+                if event.event_type == WorkloadEventType.SCHEDULER_START:
+                    self.scheduler_start_event = event
                 
                 # Processor - Main Start
-                if PROCESSOR_START in content:
-                    event = WorkloadEvent(PROCESSOR_START, self.get_time(msg), msg.content)
-                    self.processorEvents.append(event)
+                if event.event_type == WorkloadEventType.PROCESSOR_START:
+                    self.processor_events.append(event)
                 
                 # Processor - Fork Start
-                if PROCESSOR_FORK_START in content:
-                    event = WorkloadEvent(PROCESSOR_FORK_START, self.get_time(msg), msg.content)
-                    self.processorForkEvents.append(event)
+                if event.event_type == WorkloadEventType.PROCESSOR_FORK_START:
+                    self.processor_fork_events.append(event)
                 
-                # Job Completion Status
-                if JOB_STATUS in content:
-                    event = WorkloadEvent(PROCESSOR_FORK_START, self.get_time(msg), msg.content)
-                    self.jobCompletionEvents.append(event)
+                # Job Consolidation Status
+                if event.event_type == WorkloadEventType.WORKLOAD_CONSOLIDATION_STATUS:
+                    self.job_consolidation_status_events.append(event)
+                
+                # Job Processing Status
+                if event.event_type == WorkloadEventType.WORKLOAD_PROCESSING_STATUS:
+                    self.job_processing_status_events.append(event)
 
                 if event is not None:
-                    print str(event.time_stamp) + " " + event.contents
+                    print str(event.timestamp) + " " + event.contents
             
                 # Delete the message
-                self.log_queue_service.delete_message(self.config.logger_queue_name, msg.id, msg.pop_receipt)
+                # self.log_queue_service.delete_message(self.config.workload_tracker_queue_name, msg.id, msg.pop_receipt)
 
             # Stop when the workload is completed    
-            if self.workloadCompleteEvent is not None and self.schedulerStartEvent is not None:
+            if self.workload_complete_event is not None and self.scheduler_start_event is not None:
                 break
 
             # Sleeping to avoid spamming if the queue is empty
             if not messages:
                 time.sleep(10)
     
+    def time_elapse(self, evt1, evt2):
+        return divmod((evt2.timestamp - evt1.timestamp).total_seconds(), 60)
+    
     def print_summary(self):
         print "\nSummary: "
-        print "Scheduler Started: " + str(self.schedulerStartEvent.time_stamp)
-        print "Workload Completed: " + str(self.workloadCompleteEvent.time_stamp)
+        print "Scheduler Started: " + str(self.scheduler_start_event.timestamp)
+        print "Workload Completed: " + str(self.workload_complete_event.timestamp)
         
-        self.processorEvents.sort(key=lambda evt: evt.time_stamp)
-        print "Number of Processors: " + str(len(self.processorEvents))
-        print "\tFirst Processor Up: " + str(self.processorEvents[0].time_stamp)
-        print "\tLast Processor Up: " + str(self.processorEvents[-1].time_stamp)
-        print "\tNumber of Forked Processors Instances: " + str(len(self.processorForkEvents))
+        # Workload Completion
+        elapse = self.time_elapse(self.scheduler_start_event, self.workload_complete_event)
+        print "Workload Elapsed Time: " + str(elapse[0]) + " mins, " + str(elapse[1]) + " secs" 
+        
+        # Processor Information
+        self.processor_events.sort(key=lambda evt: evt.timestamp)
+        print "Number of Processors: " + str(len(self.processor_events))
+        print "\tNumber of Forked Processors Instances: " + str(len(self.processor_fork_events))
+        print "\tFirst Processor Up: " + str(self.processor_events[0].timestamp)
+        print "\tLast Processor Up: " + str(self.processor_events[-1].timestamp)
 
-        self.jobCompletionEvents.sort(key=lambda evt: evt.time_stamp, reverse=True)
-        elapseTotalJobProcessTime = divmod((self.jobCompletionEvents[0].time_stamp - self.processorEvents[0].time_stamp).total_seconds(), 60)
-        print "All jobs completed at " + str(self.jobCompletionEvents[0].time_stamp)
-        print "Total time to process jobs " + str(elapseTotalJobProcessTime[0]) + " mins, " + str(elapseTotalJobProcessTime[1]) + " secs" 
-
-        elapseWorkloadTime = divmod((self.workloadCompleteEvent.time_stamp - self.schedulerStartEvent.time_stamp).total_seconds(), 60)
-        print "Workload Elapsed Time: " + str(elapseWorkloadTime[0]) + " mins, " + str(elapseWorkloadTime[1]) + " secs"
+        # Job Processor Completion
+        self.job_processing_status_events.sort(key=lambda evt: evt.timestamp)
+        print "Final Processing Time: " + str(self.job_processing_status_events[-1].timestamp)
+        elapse = self.time_elapse(self.processor_events[0], self.job_processing_status_events[-1])
+        print "Processing Elapsed Time: " + str(elapse[0]) + " mins, " + str(elapse[1]) + " secs" 
 
 if __name__ == "__main__":
     WORKLOAD = Workload(Config())

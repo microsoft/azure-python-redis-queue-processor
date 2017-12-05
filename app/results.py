@@ -151,9 +151,9 @@ class Results(object):
             self.log_exception(ex, self.consolidate_results.__name__)
             return len(result_messages)
 
-    def get_total_jobs_completion_status(self):
+    def get_total_jobs_consolidated_status(self):
         """
-        Write out the the current state of the workload; the percentage of jobs that are completed
+        Write out the the current state of the workload; the percentage of jobs that are completed and consolidated
         "return: float status: percentage of completed jobs
         """
         # log out total job status

@@ -16,6 +16,7 @@ from config import Config
 from aescipher import AESCipher
 from aeskeywrapper import AESKeyWrapper
 from rq import Queue, Connection, Worker
+from workloadTracker import WorkloadTracker, WorkloadEventType
 
 LOGGER = logging.getLogger(__name__)
 
@@ -114,6 +115,7 @@ def parse_args():
 
 def init(args):
     LOGGER.info('Running Processor - Fork')
+    WORKLOADTRACKER.write(WorkloadEventType.PROCESSOR_FORK_START, 'Running Processor - Fork')
     PROCESSOR = Processor(LOGGER, args.redisHost, args.redisPort, args.queues, args.aesKeyFilePath)
     PROCESSOR.run()
 
@@ -122,6 +124,10 @@ if __name__ == "__main__":
     init_logging()
     
     LOGGER.info('Running Processor - Main')
+
+    # record scheduler starting
+    WORKLOADTRACKER = WorkloadTracker(LOGGER)
+    WORKLOADTRACKER.write(WorkloadEventType.PROCESSOR_START, 'Running Processor - Main')
 
     commandLineArgs = parse_args()
     # Fork process

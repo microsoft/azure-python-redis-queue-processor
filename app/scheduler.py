@@ -20,6 +20,7 @@ from aeskeywrapper import AESKeyWrapper
 from jobstatus import JobStatus, JobState
 from metricslogger import MetricsLogger
 from validator import Validator
+from workloadTracker import WorkloadTracker, WorkloadEventType
 
 LOGGER = logging.getLogger(__name__)
 
@@ -122,6 +123,11 @@ if __name__ == "__main__":
     print(ARGS)
 
     LOGGER.info('Running Scheduler - Main')
+
+    # record scheduler starting
+    WORKLOADTRACKER = WorkloadTracker(LOGGER)
+    WORKLOADTRACKER.write(WorkloadEventType.SCHEDULER_START, 'Running Scheduler - Main')
+    
     # start program
     SCHEDULER = Scheduler(LOGGER, ARGS.redisHost, ARGS.redisPort)
     JOBS = SCHEDULER.run(ARGS.dataFilePath)
@@ -139,7 +145,6 @@ if __name__ == "__main__":
         
         STATUS = VALIDATOR.run()
         if STATUS == 1.0:
-            LOGGER.info('All jobs are completed.')
+            LOGGER.info("All jobs are completed and consolidated.")
+            WORKLOADTRACKER.write(WorkloadEventType.WORKLOAD_DONE, "All jobs are completed.")
             break
-
-        time.sleep(15)

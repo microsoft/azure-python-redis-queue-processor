@@ -50,4 +50,6 @@ class Config(object):
     job_status_key_prefix = "task-status-"
     job_status_queue_name = ""
     job_status_queue_sas_token = ""
+    workload_tracker_queue_name = "workloadstatus"
+    workload_tracker_sas_token = ""
 

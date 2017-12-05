@@ -10,6 +10,7 @@ from rq import Queue, Connection, Worker
 from jobstatus import JobState
 from results import Results
 from config import Config
+from workloadTracker import WorkloadTracker, WorkloadEventType
 
 # Logger
 LOGGER = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ class Validator(object):
         self.redis_host = redisHost
         self.redis_port = redisPort
         self.results = Results(logger, redisHost, redisPort)
+        self.workloadTracker = WorkloadTracker(self.logger)
     
     def requeue_job(self, job_id):
         """
@@ -102,13 +104,22 @@ class Validator(object):
             for jobKey in activejobs:
                 # validate job processing health using the job status collection
                 self.validate_job_health(jobKey, redis_conn)
+            
+            # record the number of processed jobs
+            total_scheduled_jobs = int(redis_conn.get(self.config.scheduled_jobs_count_redis_key))
+            perc = float(total_scheduled_jobs - len(activejobs)) / total_scheduled_jobs
+            status_msg = "Jobs Successfully Proccessed (%): {0:.2f}".format(perc)
+            self.workloadTracker.write(WorkloadEventType.WORKLOAD_PROCESSING_STATUS, status_msg)
+            self.logger.info(status_msg)
 
         # consolidate any completed results
         self.results.consolidate_results()
+        perc = self.results.get_total_jobs_consolidated_status()
 
-        perc = self.results.get_total_jobs_completion_status()
-
-        self.logger.info("Jobs Completed (%): {0:.2f}".format(perc))
+        # record the number of consolidated results
+        status_msg = "Jobs Consolidated (%): {0:.2f}".format(perc)
+        self.workloadTracker.write(WorkloadEventType.WORKLOAD_CONSOLIDATION_STATUS, status_msg)
+        self.logger.info(status_msg)
 
         return perc
 
