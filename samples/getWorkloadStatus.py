@@ -38,7 +38,7 @@ class Workload(object):
         print "Getting Relevant Workload Events"
         while True:
             # Setting message visibility to 2 days, so that the message won't get processed again
-            messages = self.log_queue_service.get_messages(self.config.logger_queue_name, 32, visibility_timeout=60*60*24*2)
+            messages = self.log_queue_service.get_messages(self.config.logger_queue_name, 32)
             for msg in messages:
                 content = str(msg.content)
                 event = None    
@@ -70,6 +70,9 @@ class Workload(object):
 
                 if event is not None:
                     print str(event.time_stamp) + " " + event.contents
+            
+                # Delete the message
+                self.log_queue_service.delete_message(self.config.logger_queue_name, msg.id, msg.pop_receipt)
 
             # Stop when the workload is completed    
             if self.workloadCompleteEvent is not None and self.schedulerStartEvent is not None:
@@ -77,18 +80,24 @@ class Workload(object):
 
             # Sleeping to avoid spamming if the queue is empty
             if not messages:
-                print "Empty queue. Sleeping for 30 seconds..."
-                time.sleep(30)
+                time.sleep(10)
     
     def print_summary(self):
         print "\nSummary: "
         print "Scheduler Started: " + str(self.schedulerStartEvent.time_stamp)
         print "Workload Completed: " + str(self.workloadCompleteEvent.time_stamp)
-        print "Number of Processors: " + str(len(self.processorEvents))
+        
         self.processorEvents.sort(key=lambda evt: evt.time_stamp)
+        print "Number of Processors: " + str(len(self.processorEvents))
         print "\tFirst Processor Up: " + str(self.processorEvents[0].time_stamp)
         print "\tLast Processor Up: " + str(self.processorEvents[-1].time_stamp)
         print "\tNumber of Forked Processors Instances: " + str(len(self.processorForkEvents))
+
+        self.jobCompletionEvents.sort(key=lambda evt: evt.time_stamp, reverse=True)
+        elapseTotalJobProcessTime = divmod((self.jobCompletionEvents[0].time_stamp - self.processorEvents[0].time_stamp).total_seconds(), 60)
+        print "All jobs completed at " + str(self.jobCompletionEvents[0].time_stamp)
+        print "Total time to process jobs " + str(elapseTotalJobProcessTime[0]) + " mins, " + str(elapseTotalJobProcessTime[1]) + " secs" 
+
         elapseWorkloadTime = divmod((self.workloadCompleteEvent.time_stamp - self.schedulerStartEvent.time_stamp).total_seconds(), 60)
         print "Workload Elapsed Time: " + str(elapseWorkloadTime[0]) + " mins, " + str(elapseWorkloadTime[1]) + " secs"
 
