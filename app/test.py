@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     results = Results(logger, 'localhost', 6379)
 
-    resultsCount = results.count_results()
+    resultsCount = results.count_consolidated_results()
 
     print("Results count: " + str(resultsCount))
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         results.write_result(str(uuid.uuid4()), "result content " + str(x))
         print("Created results blob #" + str(x))
 
-    resultsCount = results.count_results()
+    resultsCount = results.count_consolidated_results()
 
     print("Results count: " + str(resultsCount))
 

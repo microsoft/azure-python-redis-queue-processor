@@ -10,6 +10,8 @@ from config import Config
 from aescipher import AESCipher
 from aeshelper import AESHelper
 
+RESULT_CONSOLIDATION_SIZE = 10
+
 class Results(object):
     """
     Handles interacting with encrypted results in blob storage.
@@ -47,6 +49,7 @@ class Results(object):
             # creates instance of Azure QueueService
             self.storage_service_queue = QueueService(account_name = self.config.storage_account_name, sas_token = self.config.job_status_queue_sas_token)
             self.storage_service_queue.encode_function = models.QueueMessageFormat.noencode
+            self.storage_service_queue.create_queue(self.config.results_container_name)
 
             # creates instance of Redis client to use for job status storage
             pool = redis.ConnectionPool(host=self.redis_host, port=self.redis_port)
@@ -70,9 +73,9 @@ class Results(object):
 
     def write_result(self, job_id, result):
         """
-        Encrypts and writes result to storage
+        Encrypts and writes result to queue
 
-        :param str result: The result to write to storage
+        :param str result: The result to write to queue
         :return: True on success. False on failure.
         :rtype: boolean
         """
@@ -80,52 +83,26 @@ class Results(object):
             # encrypt the encoded result and then encode it
             encryptedResult = base64.b64encode(self.aescipher.encrypt(result))
 
-            # write the encrypted and encoded result out to blob storage using the job id as the file name
-            self.storage_service.create_blob_from_text(self.config.results_container_name, job_id, encryptedResult)
+            # put the encoded result into the azure queue for future consolidation
+            self.storage_service_queue.put_message(self.config.results_container_name, encryptedResult)
+
+            return True
         except Exception as ex:
             self.log_exception(ex, self.write_result.__name__)
             return False
 
-    def count_results(self):
+    def count_consolidated_results(self):
         """
-        Returns a count of results in storage.
+        Returns a count of results that were consolidated.
 
-        "return: int count: Total count of results in storage.
+        "return: int count: Total count of results that were consolidated.
         """
         try:
             consolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
             return consolidatedResults
         except Exception as ex:
-            self.log_exception(ex, self.count_results.__name__)
+            self.log_exception(ex, self.count_consolidated_results.__name__)
             return False
-
-    def _consolidate_result_blob(self, blob_name):
-        """
-        Consolidates individual result blob into consolidated result file. Individual result blob is deleted once it
-        is added to the consolidated file.
-
-        "param: str blob_name: Name of the individual result blob to consolidate.
-        """
-        try:
-            # read the contents of the blob
-            with io.BytesIO() as blobContents:
-                self.storage_service.get_blob_to_stream(self.config.results_container_name, blob_name, blobContents)
-                blobContents.write(b'\n')
-                blobContents.seek(0)
-
-                # append the result blob contents to the consolidated file
-                self.logger.info("Appended results blob: " + blob_name)
-                self.append_storage_service.append_blob_from_stream(self.config.results_container_name, self.config.results_consolidated_file, blobContents)
-
-            # delete the individual results blob now that it has been added to the consolidated file
-            self.logger.info("Deleting results blob: " + blob_name + " from container: " + self.config.results_container_name)
-            self.storage_service.delete_blob(self.config.results_container_name, blob_name)
-
-            # update the consolidated results count in Redis, we do this per iteration of the loop so if
-            # this process / VM fails during consolidation we still have an accurate count
-            self.storage_service_cache.incr(self.config.results_consolidated_count_redis_key)
-            totalConsolidatedResults = self.storage_service_cache.get(self.config.results_consolidated_count_redis_key)
-            self.logger.info("Results consolidated: " + str(totalConsolidatedResults))
 
         except Exception as ex:
             self.log_exception(ex, self.consolidate_results.__name__ + " - Error consolidating result blob.")
@@ -137,45 +114,40 @@ class Results(object):
 
         "return: int count: Total count of results consolidated in result file.
         """
-        # create a counter to track the total results consolidated by this function
-        resultsConsolidated = 0
 
         try:
             # ensure the consolidated append blob exists
-            if(self.append_storage_service.exists(self.config.results_container_name, blob_name=self.config.results_consolidated_file) == False):
+            if not self.append_storage_service.exists(self.config.results_container_name, blob_name=self.config.results_consolidated_file):
                 self.append_storage_service.create_blob(self.config.results_container_name, self.config.results_consolidated_file)
 
-            # boolean to track whether or not we found any blobs to consolidate
-            blobsConsolidated = True
+            result_messages = []
+            with io.BytesIO as consolidated_result:
+                while len(result_messages) < RESULT_CONSOLIDATION_SIZE:
+                    messages = self.storage_service_queue.get_messages(self.config.logger_queue_name, min(RESULT_CONSOLIDATION_SIZE, 32))
+                    
+                    # If the queue is empty, stop and consolidate
+                    if not messages:
+                        break
 
-            # keep looping as long as we've found results to consolidate
-            while(blobsConsolidated):
-                blobsConsolidated = False
-                # get a list of result blobs to consolidate
-                resultBlobs = self.storage_service.list_blobs(self.config.results_container_name)
+                    # add the message to the memory stream
+                    for msg in messages:
+                        consolidated_result.append(msg.content+"\n")
+                    result_messages.append(messages)
+            
+                # append the results to the consolidated file
+                self.append_storage_service.append_blob_from_stream(self.config.results_container_name, self.config.results_consolidated_file, consolidated_result)
 
-                # iterate through the blobs in the container
-                for blob in resultBlobs:
-                    # make sure the blob we got back from the container isn't the consolidated blob
-                    if(blob.name != self.config.results_consolidated_file):
-                        # update the results consolidated in this function counter
-                        resultsConsolidated += 1
-
-                        # consolidate the result blob
-                        self._consolidate_result_blob(blob.name)
-
-                        # update the boolean so we know we should check for more blobs to consolidate after the
-                        # blobs listed in the current generator are all consolidated
-                        blobsConsolidated = True
+            # remove all of the messages from the queue
+            self.storage_service_cache.incrby(self.config.results_consolidated_count_redis_key, len(result_messages))
 
             # write the count of results we consolidated out to queue to provide status
-            self.storage_service_queue.put_message(self.config.job_status_queue_name, str(resultsConsolidated) + " results consolidated.")
+            self.storage_service_queue.put_message(self.config.job_status_queue_name, str(len(result_messages)) + " results consolidated.")
 
-            return resultsConsolidated
+            return len(result_messages)
 
         except Exception as ex:
             self.log_exception(ex, self.consolidate_results.__name__)
-            return resultsConsolidated
+            return len(result_messages)
 
     def get_total_jobs_completion_status(self):
         """
