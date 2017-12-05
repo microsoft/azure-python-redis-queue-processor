@@ -4,6 +4,7 @@ This script will pull messages from the Job Status Queue and print out the messa
 
 from app.config import Config
 from azure.storage.queue import QueueService
+from datetime import datetime
 import sys
 import time
 
@@ -30,6 +31,9 @@ class Workload(object):
         self.processorForkEvents = []
         self.jobCompletionEvents = []
 
+    def get_time(self, msg):
+        return datetime.strptime(msg.content[:msg.content.index(',')], '%Y-%m-%d %H:%M:%S')
+
     def get_events(self):
         print "Getting Relevant Workload Events"
         while True:
@@ -41,27 +45,27 @@ class Workload(object):
 
                 # Workload Completed
                 if WORKLOAD_DONE_MSG in content:
-                    event = WorkloadEvent(WORKLOAD_DONE_MSG, msg.insertion_time, msg.content)
+                    event = WorkloadEvent(WORKLOAD_DONE_MSG, self.get_time(msg), msg.content)
                     self.workloadCompleteEvent = event
 
                 # Scheduler - Main Start
                 if SCHEDULER_START in content:
-                    event = WorkloadEvent(SCHEDULER_START, msg.insertion_time, msg.content)
+                    event = WorkloadEvent(SCHEDULER_START, self.get_time(msg), msg.content)
                     self.schedulerStartEvent = event
                 
                 # Processor - Main Start
                 if PROCESSOR_START in content:
-                    event = WorkloadEvent(PROCESSOR_START, msg.insertion_time, msg.content)
+                    event = WorkloadEvent(PROCESSOR_START, self.get_time(msg), msg.content)
                     self.processorEvents.append(event)
                 
                 # Processor - Fork Start
                 if PROCESSOR_FORK_START in content:
-                    event = WorkloadEvent(PROCESSOR_FORK_START, msg.insertion_time, msg.content)
+                    event = WorkloadEvent(PROCESSOR_FORK_START, self.get_time(msg), msg.content)
                     self.processorForkEvents.append(event)
                 
                 # Job Completion Status
                 if JOB_STATUS in content:
-                    event = WorkloadEvent(PROCESSOR_FORK_START, msg.insertion_time, msg.content)
+                    event = WorkloadEvent(PROCESSOR_FORK_START, self.get_time(msg), msg.content)
                     self.jobCompletionEvents.append(event)
 
                 if event is not None:
