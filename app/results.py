@@ -46,10 +46,12 @@ class Results(object):
             self.append_storage_service = AppendBlobService(account_name = self.config.storage_account_name, sas_token = self.config.results_container_sas_token)
             self.storage_service.create_container(self.config.results_container_name)
 
-            # creates instance of Azure QueueService
-            self.storage_service_queue = QueueService(account_name = self.config.storage_account_name, sas_token = self.config.job_status_queue_sas_token)
-            self.storage_service_queue.encode_function = models.QueueMessageFormat.noencode
-            self.storage_service_queue.create_queue(self.config.results_container_name)
+            # creates instances of Azure QueueService
+            self.job_status_queue_service = QueueService(account_name = self.config.storage_account_name, sas_token = self.config.job_status_queue_sas_token)
+            self.job_status_queue_service.encode_function = models.QueueMessageFormat.noencode
+            self.results_queue_service = QueueService(account_name = self.config.storage_account_name, sas_token = self.config.results_queue_sas_token)
+            self.results_queue_service.create_queue(self.config.results_container_name)
+            self.results_queue_service.encode_function = models.QueueMessageFormat.noencode
 
             # creates instance of Redis client to use for job status storage
             pool = redis.ConnectionPool(host=self.redis_host, port=self.redis_port)
@@ -71,7 +73,7 @@ class Results(object):
         self.logger.debug(type(exception))
         self.logger.debug(exception)
 
-    def write_result(self, job_id, result):
+    def write_result(self, result):
         """
         Encrypts and writes result to queue
 
@@ -84,7 +86,7 @@ class Results(object):
             encryptedResult = base64.b64encode(self.aescipher.encrypt(result))
 
             # put the encoded result into the azure queue for future consolidation
-            self.storage_service_queue.put_message(self.config.results_container_name, encryptedResult)
+            self.results_queue_service.put_message(self.config.results_queue_name, encryptedResult)
 
             return True
         except Exception as ex:
@@ -114,16 +116,15 @@ class Results(object):
 
         "return: int count: Total count of results consolidated in result file.
         """
-
         try:
             # ensure the consolidated append blob exists
             if not self.append_storage_service.exists(self.config.results_container_name, blob_name=self.config.results_consolidated_file):
                 self.append_storage_service.create_blob(self.config.results_container_name, self.config.results_consolidated_file)
 
             result_messages = []
-            with io.BytesIO as consolidated_result:
+            with io.BytesIO() as consolidated_result:
                 while len(result_messages) < RESULT_CONSOLIDATION_SIZE:
-                    messages = self.storage_service_queue.get_messages(self.config.logger_queue_name, min(RESULT_CONSOLIDATION_SIZE, 32))
+                    messages = self.results_queue_service.get_messages(self.config.results_queue_name, min(RESULT_CONSOLIDATION_SIZE, 32))
                     
                     # If the queue is empty, stop and consolidate
                     if not messages:
@@ -131,17 +132,20 @@ class Results(object):
 
                     # add the message to the memory stream
                     for msg in messages:
-                        consolidated_result.append(msg.content+"\n")
-                    result_messages.append(messages)
+                        consolidated_result.write(msg.content+"\n")
+                        result_messages.append(msg)
             
                 # append the results to the consolidated file
+                consolidated_result.seek(0)
                 self.append_storage_service.append_blob_from_stream(self.config.results_container_name, self.config.results_consolidated_file, consolidated_result)
 
             # remove all of the messages from the queue
+            for msg in result_messages:
+                self.results_queue_service.delete_message(self.config.results_queue_name, msg.id, msg.pop_receipt)
             self.storage_service_cache.incrby(self.config.results_consolidated_count_redis_key, len(result_messages))
 
             # write the count of results we consolidated out to queue to provide status
-            self.storage_service_queue.put_message(self.config.job_status_queue_name, str(len(result_messages)) + " results consolidated.")
+            self.job_status_queue_service.put_message(self.config.job_status_queue_name, str(len(result_messages)) + " results consolidated.")
 
             return len(result_messages)
 
@@ -163,6 +167,6 @@ class Results(object):
 
         status_message = "Total: "+ total_consolidated_results + "/" + total_scheduled_jobs + " jobs have been successfully processed and consolidated."
         self.logger.info(status_message)
-        self.storage_service_queue.put_message(self.config.job_status_queue_name, status_message)
+        self.job_status_queue_service.put_message(self.config.job_status_queue_name, status_message)
 
         return float(total_consolidated_results) / int(total_scheduled_jobs)

@@ -28,6 +28,8 @@
     "logger_queue_sas": "",
     "scheduled_jobs_count_redis_key": "totalScheduledJobsCount",
     "results_container_name": "results",
+    "results_queue_name": "results",
+    "results_queue_sas_token": "",
     "results_consolidated_file": "allresults.txt",
     "results_consolidated_count_redis_key": "consolidatedResultsCount",
     "results_container_sas_token":"",

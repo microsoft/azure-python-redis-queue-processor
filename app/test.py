@@ -1,9 +1,9 @@
+import base64
 import logging
 import uuid
 import time
 import socket
 from results import Results
-
 logger = logging.getLogger(__name__)
 
 def initLogging():
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     print("Results count: " + str(resultsCount))
 
     for x in range(100):
-        results.write_result(str(uuid.uuid4()), "result content " + str(x))
+        results.write_result(str(x))
         print("Created results blob #" + str(x))
 
     resultsCount = results.count_consolidated_results()
