@@ -14,6 +14,7 @@ from aeskeywrapper import AESKeyWrapper
 from config import Config
 import os
 import base64
+import sys
 
 # Load configuration
 # Config file is stored in /var/lib/waagent/CustomData
@@ -47,9 +48,15 @@ blob_service.get_blob_to_path(container_name=config.storage_container_name,
 encrypted_script_filename = os.path.join(config.encrypted_files_folder, config.encrypted_scheduler_script_filename)
 decrypted_script_filename = os.path.join(config.app_code_folder, config.unencrypted_scheduler_script_filename)
 
+# Get blob encrypted data file from the cmd line arg
+if len(sys.argv) == 2:
+    blob_data_file_name = sys.argv[1]
+else:
+    blob_data_file_name = config.encrypted_data_filename
+
 # Download encrypted data file
 blob_service.get_blob_to_path(container_name=config.storage_container_name,
-                              blob_name=config.encrypted_data_filename,
+                              blob_name=blob_data_file_name,
                               file_path=os.path.join(config.encrypted_files_folder, config.encrypted_data_filename))
 
 # Decode AES key

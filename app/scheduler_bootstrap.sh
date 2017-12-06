@@ -12,5 +12,5 @@ pip install futures
 
 tar -xzf app.tar.gz
 
-python app/schedulerconfiguration.py
-python app/scheduler-unencrypted.py data/data.encrypted --redisHost $1 --redisPort 6379 2>&1 | python app/queuelogger.py
+python app/schedulerconfiguration.py $1
+python app/scheduler-unencrypted.py data/data.encrypted --redisHost $2 --redisPort 6379 2>&1 | python app/queuelogger.py
