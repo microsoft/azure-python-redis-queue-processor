@@ -121,7 +121,6 @@ class JobStatus(object):
 
             # write the serialized record out to Redis
             self.storage_service_cache.set(self.config.job_status_key_prefix + jobId, jobStatusSerialized)
-            self.logger.info('queued: ' + jobId)
             return True
         except Exception as ex:
             self.log_exception(ex, self.add_job_status.__name__)

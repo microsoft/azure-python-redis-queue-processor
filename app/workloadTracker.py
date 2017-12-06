@@ -12,6 +12,7 @@ class WorkloadEventType(IntEnum):
     WORKLOAD_PROCESSING_STATUS = 5
     WORKLOAD_CONSOLIDATION_STATUS = 6
     ACTIVE_JOBS =  7
+    JOBS_QUEUE_DONE = 8
 
 class WorkloadEvent(object):
     def __init__(self):

@@ -14,6 +14,6 @@ ELAPSED_TIME=$(($SECONDS - $START_TIME))
 echo "Azure deployment completed in: $(($ELAPSED_TIME/60)) min $(($ELAPSED_TIME%60)) sec"  
 
 # Monitor Workload Status
-python samples/getWorkloadStatus.py
+python samples/getWorkloadStatus.py > workload.log
 
   

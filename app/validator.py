@@ -107,8 +107,9 @@ class Validator(object):
             
             # record the number of processed jobs
             total_scheduled_jobs = int(redis_conn.get(self.config.scheduled_jobs_count_redis_key))
-            perc = float(total_scheduled_jobs - len(activejobs)) / total_scheduled_jobs
-            status_msg = "Jobs Successfully Proccessed (%): {0:.2f}".format(perc)
+            remaining_jobs = total_scheduled_jobs - len(activejobs)
+            perc = float(remaining_jobs) / total_scheduled_jobs
+            status_msg = "Jobs Successfully Proccessed (%): {0:.2f} ... {1}/{2}".format(perc, remaining_jobs, total_scheduled_jobs)
             self.workloadTracker.write(WorkloadEventType.WORKLOAD_PROCESSING_STATUS, status_msg)
             self.logger.info(status_msg)
 

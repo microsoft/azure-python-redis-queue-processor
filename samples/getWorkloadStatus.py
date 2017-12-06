@@ -23,6 +23,7 @@ class Workload(object):
                 sas_token=self.config.workload_tracker_sas_token)
         self.workload_complete_event = None
         self.scheduler_start_event = None
+        self.jobs_queued_done = None
         self.processor_events = []
         self.processor_fork_events = []
         self.job_consolidation_status_events = []
@@ -60,12 +61,16 @@ class Workload(object):
                 # Job Processing Status
                 if event.event_type == WorkloadEventType.WORKLOAD_PROCESSING_STATUS:
                     self.job_processing_status_events.append(event)
+                
+                # All Jobs Queued
+                if event.event_type == WorkloadEventType.JOBS_QUEUE_DONE:
+                    self.jobs_queued_done = event
 
                 if event is not None:
                     print str(event.timestamp) + " " + event.contents
             
                 # Delete the message
-                # self.log_queue_service.delete_message(self.config.workload_tracker_queue_name, msg.id, msg.pop_receipt)
+                self.log_queue_service.delete_message(self.config.workload_tracker_queue_name, msg.id, msg.pop_receipt)
 
             # Stop when the workload is completed    
             if self.workload_complete_event is not None and self.scheduler_start_event is not None:
@@ -82,6 +87,11 @@ class Workload(object):
         print "\nSummary: "
         print "Scheduler Started: " + str(self.scheduler_start_event.timestamp)
         print "Workload Completed: " + str(self.workload_complete_event.timestamp)
+        
+        # Jobs Queued
+        print "All Jobs Queued: " + str(self.jobs_queued_done.timestamp)
+        elapse = self.time_elapse(self.scheduler_start_event, self.jobs_queued_done)
+        print "Jobs Queued Elapsed Time: " + str(elapse[0]) + " mins, " + str(elapse[1]) + " secs" 
         
         # Workload Completion
         elapse = self.time_elapse(self.scheduler_start_event, self.workload_complete_event)

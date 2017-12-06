@@ -28,7 +28,7 @@ class Scheduler(object):
     """
     Scheduler class enqueues jobs to Redis Q
     """
-    def __init__(self, logger, redis_host, redis_port):
+    def __init__(self, logger, redis_host, redis_port, workloadtracker):
         """
         :param logger logger: logger
         :param str redis_host: Redis host where the Redis Q is running
@@ -39,6 +39,7 @@ class Scheduler(object):
         self.redis_host = redis_host
         self.redis_port = redis_port
         self.jobstatus = JobStatus(logger, redis_host, redis_port)
+        self.workloadtracker = workloadtracker
 
     def format_record(self, record):
         """
@@ -90,6 +91,7 @@ class Scheduler(object):
         redis_conn.incrby(self.config.scheduled_jobs_count_redis_key, count)
 
         self.logger.info('%d jobs queued', count)
+        self.workloadtracker.write(WorkloadEventType.JOBS_QUEUE_DONE, str(count) + ' jobs queued.')
 
         return jobs
 
@@ -129,7 +131,7 @@ if __name__ == "__main__":
     WORKLOADTRACKER.write(WorkloadEventType.SCHEDULER_START, 'Running Scheduler - Main')
     
     # start program
-    SCHEDULER = Scheduler(LOGGER, ARGS.redisHost, ARGS.redisPort)
+    SCHEDULER = Scheduler(LOGGER, ARGS.redisHost, ARGS.redisPort, WORKLOADTRACKER)
     JOBS = SCHEDULER.run(ARGS.dataFilePath)
 
     # create an instance of MetricsLogger to begin capturing VM metrics
@@ -144,6 +146,7 @@ if __name__ == "__main__":
         METRICSLOGGER.capture_vm_metrics()
         
         STATUS = VALIDATOR.run()
+        LOGGER.info("Status Completed: "+str(STATUS))
         if STATUS == 1.0:
             LOGGER.info("All jobs are completed and consolidated.")
             WORKLOADTRACKER.write(WorkloadEventType.WORKLOAD_DONE, "All jobs are completed.")
