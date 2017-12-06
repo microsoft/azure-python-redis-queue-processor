@@ -6,7 +6,7 @@ import socket
 import sys
 import pickle
 from datetime import datetime
-from rq import Queue, Connection, Worker
+from rq import Queue, Connection, Worker, get_failed_queue
 from jobstatus import JobState
 from results import Results
 from config import Config
@@ -34,6 +34,18 @@ class Validator(object):
         self.redis_port = redisPort
         self.results = Results(logger, redisHost, redisPort)
         self.workloadTracker = WorkloadTracker(self.logger)
+
+    def check_failed_queue(self, redis_conn):
+        """
+        Requeue all jobs in the Failed job queue
+        """
+        with Connection(redis_conn):
+            failed_queue = get_failed_queue()
+
+            # TODO: Need to keep track of number of attempts a job is requeued
+            for job in failed_queue.get_jobs():
+                self.logger.info("Requeued: " + str(job.id))
+                failed_queue.requeue(job.id)
     
     def requeue_job(self, job_id):
         """
@@ -112,6 +124,9 @@ class Validator(object):
             status_msg = "Jobs Successfully Proccessed (%): {0:.2f} ... {1}/{2}".format(perc, remaining_jobs, total_scheduled_jobs)
             self.workloadTracker.write(WorkloadEventType.WORKLOAD_PROCESSING_STATUS, status_msg)
             self.logger.info(status_msg)
+        
+        # requue jobs in the Failed job queue
+        self.check_failed_queue(redis_conn)
 
         # consolidate any completed results
         self.results.consolidate_results()

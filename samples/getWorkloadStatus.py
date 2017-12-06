@@ -107,7 +107,7 @@ class Workload(object):
         # Job Processor Completion
         self.job_processing_status_events.sort(key=lambda evt: evt.timestamp)
         print "Final Processing Time: " + str(self.job_processing_status_events[-1].timestamp)
-        elapse = self.time_elapse(self.processor_events[0], self.job_processing_status_events[-1])
+        elapse = self.time_elapse(self.scheduler_start_event, self.job_processing_status_events[-1])
         print "Processing Elapsed Time: " + str(elapse[0]) + " mins, " + str(elapse[1]) + " secs" 
 
 if __name__ == "__main__":

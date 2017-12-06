@@ -1,25 +1,36 @@
-from datetime import datetime
+"""
+Track the workload's progress with specific events published here
+"""
 import json
-from config import Config
 from enum import IntEnum
 from azure.storage.queue import QueueService, models
+from config import Config
 
 class WorkloadEventType(IntEnum):
+    """
+    Enum for all of the events that need to be tracked to monitor progress and measure perf of the workload
+    """
     SCHEDULER_START = 1
     PROCESSOR_START = 2
     PROCESSOR_FORK_START = 3
     WORKLOAD_DONE = 4
     WORKLOAD_PROCESSING_STATUS = 5
     WORKLOAD_CONSOLIDATION_STATUS = 6
-    ACTIVE_JOBS =  7
+    ACTIVE_JOBS = 7
     JOBS_QUEUE_DONE = 8
 
 class WorkloadEvent(object):
+    """
+    Simple class that contains the workload event information
+    """
     def __init__(self):
         self.event_type = None
         self.content = ""
 
 class WorkloadTracker(object):
+    """
+    Dedicated class to track important events during the running of the workload.
+    """
     def __init__(self, logger):
         self.config = Config()
         self.logger = logger
@@ -45,6 +56,9 @@ class WorkloadTracker(object):
             return False
 
     def write(self, event_type, content=None):
+        """
+        Write the event to the dedicated workload tracker queue
+        """
         # create an event
         evt = WorkloadEvent()
         evt.event_type = int(event_type)
