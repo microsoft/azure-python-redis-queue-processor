@@ -72,7 +72,7 @@ services:
     volumes:
       - ./docker-env:/usr/src/docker-env
       - ./docker-env/waagent:/var/lib/waagent
-    command: bash scheduler_bootstrap.sh redis
+    command: bash scheduler_bootstrap.sh data.encrypted redis
   processornode:
     container_name: processornode
     image: centos:7
