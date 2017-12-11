@@ -21,7 +21,7 @@ class Config(object):
     number_of_records = 100
     result_consolidation_size = 10
     size_of_record_kb = 1
-    job_processing_max_time_sec = 60,
+    job_processing_max_time_sec = 60
     azure_keyvault_url = ""
     azure_keyvault_key_name = ""
     azure_keyvault_key_version = ""

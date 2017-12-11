@@ -138,12 +138,13 @@ class Results(object):
                 self.append_storage_service.append_blob_from_stream(self.config.results_container_name, self.config.results_consolidated_file, consolidated_result)
 
             # remove all of the messages from the queue
+            num_of_consolidated_results = len(result_messages)
             for msg in result_messages:
                 self.results_queue_service.delete_message(self.config.results_queue_name, msg.id, msg.pop_receipt)
-            self.storage_service_cache.incrby(self.config.results_consolidated_count_redis_key, len(result_messages))
+            self.storage_service_cache.incrby(self.config.results_consolidated_count_redis_key, num_of_consolidated_results)
 
             # write the count of results we consolidated out to queue to provide status
-            self.job_status_queue_service.put_message(self.config.job_status_queue_name, str(len(result_messages)) + " results consolidated.")
+            self.job_status_queue_service.put_message(self.config.job_status_queue_name, str(num_of_consolidated_results) + " results consolidated.")
 
             return len(result_messages)
 

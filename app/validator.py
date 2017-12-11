@@ -125,7 +125,7 @@ class Validator(object):
             self.workloadTracker.write(WorkloadEventType.WORKLOAD_PROCESSING_STATUS, status_msg)
             self.logger.info(status_msg)
         
-        # requue jobs in the Failed job queue
+        # requeue jobs in the Failed job queue
         self.check_failed_queue(redis_conn)
 
         # consolidate any completed results
