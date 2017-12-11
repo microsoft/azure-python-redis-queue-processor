@@ -19,8 +19,9 @@ class Config(object):
     redis_port = 6379,
     redis_host = "localhost"
     number_of_records = 100
+    result_consolidation_size = 10
     size_of_record_kb = 1
-    job_processing_max_time_sec = 60,
+    job_processing_max_time_sec = 60
     azure_keyvault_url = ""
     azure_keyvault_key_name = ""
     azure_keyvault_key_version = ""
@@ -34,17 +35,21 @@ class Config(object):
     encrypted_files_folder = ""
     app_code_folder = ""
     encrypted_files_sas_token = ""
-    metrics_queue_name = ""
+    metrics_queue_name = "metrics"
     metrics_sas_token = ""
     metrics_vm_resource_group = ""
-    logger_queue_name = ""
+    logger_queue_name = "logger"
     logger_queue_sas = ""
     scheduled_jobs_count_redis_key = "totalScheduledJobsCount"
-    results_container_name = ""
+    results_queue_name = "results"
+    results_queue_sas_token = ""
+    results_container_name = "results"
     results_consolidated_file = ""
     results_consolidated_count_redis_key = "consolidatedResultsCount"
     results_container_sas_token = ""
     job_status_key_prefix = "task-status-"
     job_status_queue_name = ""
     job_status_queue_sas_token = ""
+    workload_tracker_queue_name = "workloadstatus"
+    workload_tracker_sas_token = ""
 

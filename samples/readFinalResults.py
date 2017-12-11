@@ -35,6 +35,5 @@ if __name__ == "__main__":
             print str(record.id) + " " + str(len(record.data) / 1024) + "KB"
             results.append(record.id)
 
-    results.sort()
     print results
     print len(results)

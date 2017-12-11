@@ -216,6 +216,10 @@ class MetricsLogger(object):
         # get all VMs in the resource group specififed in the config
         vmList = self.get_resources_in_resource_group(self.config.metrics_vm_resource_group, AzureResource.vm)
 
+        # return if cant find a vm
+        if not vmList:
+            return
+
         # iterate through each vm in the list
         for vmname in vmList:
             try:

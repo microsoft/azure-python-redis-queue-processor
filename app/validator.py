@@ -6,10 +6,11 @@ import socket
 import sys
 import pickle
 from datetime import datetime
-from rq import Queue, Connection, Worker
+from rq import Queue, Connection, Worker, get_failed_queue
 from jobstatus import JobState
 from results import Results
 from config import Config
+from workloadTracker import WorkloadTracker, WorkloadEventType
 
 # Logger
 LOGGER = logging.getLogger(__name__)
@@ -32,6 +33,19 @@ class Validator(object):
         self.redis_host = redisHost
         self.redis_port = redisPort
         self.results = Results(logger, redisHost, redisPort)
+        self.workloadTracker = WorkloadTracker(self.logger)
+
+    def check_failed_queue(self, redis_conn):
+        """
+        Requeue all jobs in the Failed job queue
+        """
+        with Connection(redis_conn):
+            failed_queue = get_failed_queue()
+
+            # TODO: Need to keep track of number of attempts a job is requeued
+            for job in failed_queue.get_jobs():
+                self.logger.info("Requeued: " + str(job.id))
+                failed_queue.requeue(job.id)
     
     def requeue_job(self, job_id):
         """
@@ -102,13 +116,26 @@ class Validator(object):
             for jobKey in activejobs:
                 # validate job processing health using the job status collection
                 self.validate_job_health(jobKey, redis_conn)
+            
+            # record the number of processed jobs
+            total_scheduled_jobs = int(redis_conn.get(self.config.scheduled_jobs_count_redis_key))
+            remaining_jobs = total_scheduled_jobs - len(activejobs)
+            perc = float(remaining_jobs) / total_scheduled_jobs
+            status_msg = "Jobs Successfully Proccessed (%): {0:.2f} ... {1}/{2}".format(perc, remaining_jobs, total_scheduled_jobs)
+            self.workloadTracker.write(WorkloadEventType.WORKLOAD_PROCESSING_STATUS, status_msg)
+            self.logger.info(status_msg)
+        
+        # requeue jobs in the Failed job queue
+        self.check_failed_queue(redis_conn)
 
         # consolidate any completed results
         self.results.consolidate_results()
+        perc = self.results.get_total_jobs_consolidated_status()
 
-        perc = self.results.get_total_jobs_completion_status()
-
-        self.logger.info("Jobs Completed (%): {0:.2f}".format(perc))
+        # record the number of consolidated results
+        status_msg = "Jobs Consolidated (%): {0:.2f}".format(perc)
+        self.workloadTracker.write(WorkloadEventType.WORKLOAD_CONSOLIDATION_STATUS, status_msg)
+        self.logger.info(status_msg)
 
         return perc
 
