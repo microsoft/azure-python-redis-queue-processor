@@ -22,7 +22,16 @@ if __name__ == "__main__":
     print "Clearing all queues"
     for queue in queues:
         storage_service_queue = QueueService(account_name = config.storage_account_name, sas_token = queue[1])
-        storage_service_queue.clear_messages(queue[0])
+        print "\tClearing " + queue[0]
+        while True:
+            try:
+                storage_service_queue.clear_messages(queue[0], timeout=300)
+                if not storage_service_queue.peek_messages(queue[0]):
+                    break
+            except:
+                print "\t Still clearing"
+                pass
+
         print "\t" + queue[0] + " cleared."
 
     storage_service = BlockBlobService(account_name = config.storage_account_name, sas_token = config.results_container_sas_token)

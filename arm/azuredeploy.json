@@ -138,6 +138,13 @@
             "metadata": {
                 "description": "SSH rsa public key file as a string."
             }
+        },
+        "encryptedDataFileBlobName": {
+            "type": "string",
+            "defaultValue": "data.encrypted",
+            "metadata": {
+                "description": "The blob name for the encrypted data file to process"
+            }
         }
     },
     "variables": {
@@ -535,7 +542,7 @@
                                         "fileUris": "[parameters('schedulerBootstrapFiles')]"
                                     },
                                     "protectedSettings": {
-                                        "commandToExecute": "[concat('./scheduler_bootstrap.sh ', variables('redisNicIpAddress'), ' &')]",
+                                        "commandToExecute": "[concat('./scheduler_bootstrap.sh ', parameters('encryptedDataFileBlobName'), ' ', variables('redisNicIpAddress'), ' &')]",
                                         "storageAccountName": "[parameters('storageAccountName')]",
                                         "storageAccountKey": "[parameters('storageAccountKey')]"
                                     }

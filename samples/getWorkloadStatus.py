@@ -106,8 +106,18 @@ class Workload(object):
 
         # Job Processor Completion
         self.job_processing_status_events.sort(key=lambda evt: evt.timestamp)
-        print "Final Processing Time: " + str(self.job_processing_status_events[-1].timestamp)
-        elapse = self.time_elapse(self.scheduler_start_event, self.job_processing_status_events[-1])
+
+        completed_processing_event =  None
+        for job_proc_evt in self.job_processing_status_events:
+            status = job_proc_evt.contents.split()[-1].split('/')
+
+            # Find when 100% of the jobs are reported to be completed processing
+            if status[0] == status[1]:
+                completed_processing_event = job_proc_evt
+                break
+
+        print "Final Processing Time: " + str(completed_processing_event.timestamp)
+        elapse = self.time_elapse(self.scheduler_start_event, completed_processing_event)
         print "Processing Elapsed Time: " + str(elapse[0]) + " mins, " + str(elapse[1]) + " secs" 
 
 if __name__ == "__main__":
