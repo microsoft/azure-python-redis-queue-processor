@@ -72,7 +72,7 @@ class Processor(object):
         # TODO: This is how we are passing the AES key to the fork child processes
         # If there is a better way, we should change it.
         os.environ['AES_SECRET'] = aes_key[0]
-        os.environ['AES_IV'] = aes_key[1]
+        os.environ['AES_IV_LENGTH'] = str(self.config.aes_iv_length)
 
         self.logger.info('Starting worker')
 

@@ -25,14 +25,12 @@ if os.path.isfile(aes_key_encrypted_filename):
     cipher = AESHelper(config).create_aescipher_from_config()
 else:
     # Generate new key\iv pair
-    aes_key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(32))
-    aes_iv = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(16))
-    keys = aes_key + aes_iv
-
-    print 'AES key generated. Key:' + aes_key + " IV:" + aes_iv
+    aes_key = urandom(config.aes_key_length)
+    
+    print 'AES key generated. Key:' + aes_key
 
     # Save encrypted keys
-    encrypted_keys = wrapper.wrap_aes_key_local(keys, wrapper.get_public_key())
+    encrypted_keys = wrapper.wrap_aes_key_local(aes_key, wrapper.get_public_key())
     with open(aes_key_encrypted_filename, "wb+") as aes_key_encrypted_file:
         aes_key_encrypted_file.write(encrypted_keys)
 

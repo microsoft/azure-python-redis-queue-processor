@@ -69,10 +69,8 @@ wrapper = AESKeyWrapper(vault = config.azure_keyvault_url,
 
 with open(encrypted_aes_key_filename, "rb") as aes_key_file:
     wrapped_key = aes_key_file.read()
-    keys = wrapper.unwrap_aes_key(wrapped_key)
-    key = keys[:config.aes_key_length]
-    iv = keys[config.aes_key_length:]
+    aes_key = wrapper.unwrap_aes_key(wrapped_key)
 
 # Decode script
-aes_cipher = AESCipher(key, iv)
+aes_cipher = AESCipher(aes_key, config.aes_iv_length)
 aes_cipher.decrypt_file_save_file(encrypted_script_filename, decrypted_script_filename)
