@@ -1,7 +1,5 @@
 import base64
 import os
-import random
-import string
 from dataGenerator import DataGenerator
 from azure.storage.blob import BlockBlobService, ContentSettings
 from app.aescipher import AESCipher
@@ -25,7 +23,7 @@ if os.path.isfile(aes_key_encrypted_filename):
     cipher = AESHelper(config).create_aescipher_from_config()
 else:
     # Generate new key\iv pair
-    aes_key = urandom(config.aes_key_length)
+    aes_key = os.urandom(config.aes_key_length)
     
     print 'AES key generated. Key:' + aes_key
 
