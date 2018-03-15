@@ -10,6 +10,7 @@
     "size_of_record_kb": 1,
     "job_processing_max_time_sec": 60,
     "aes_key_length": 32,
+    "aes_iv_length": 16,
     "azure_keyvault_url": "",
     "azure_keyvault_key_name": "RSAKey",
     "azure_keyvault_key_version": "",
