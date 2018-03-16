@@ -41,7 +41,7 @@ def _create_aes_cipher():
     and construct the AESCipher
     :return: an AESCipher created from the AES key and IV set by the parent process
     """
-    return AESCipher(os.environ['AES_SECRET'], os.environ['AES_IV'])
+    return AESCipher(os.environ['AES_SECRET'], int(os.environ['AES_IV_LENGTH']))
 
 def processing_job(encryptedRecord, redisHost, redisPort):
     """

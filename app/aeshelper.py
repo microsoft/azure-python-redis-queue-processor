@@ -34,6 +34,6 @@ class AESHelper:
         
         with open(encrypted_aes_key_path, "rb") as aes_key_file:
             wrapped_key = aes_key_file.read()
-            keys = wrapper.unwrap_aes_key(wrapped_key)
+            aes_key = wrapper.unwrap_aes_key(wrapped_key)
 
-        return AESCipher(keys[:self.config.aes_key_length], keys[self.config.aes_key_length:])
+        return AESCipher(aes_key, self.config.aes_iv_length)

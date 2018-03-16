@@ -25,7 +25,8 @@ class Config(object):
     azure_keyvault_url = ""
     azure_keyvault_key_name = ""
     azure_keyvault_key_version = ""
-    aes_key_length = 32,
+    aes_key_length = 32
+    aes_iv_length = 16
     storage_account_name = ""
     unencrypted_scheduler_script_filename = ""
     encrypted_scheduler_script_filename = ""

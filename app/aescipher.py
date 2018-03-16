@@ -9,7 +9,7 @@ class AESCipher:
     """
     padding_value = '\0'
 
-    def __init__(self, key, iv):
+    def __init__(self, key, iv_length):
         """
         Cipher constructor.
 
@@ -17,8 +17,8 @@ class AESCipher:
         :param str iv: initialization vector
         """
         self._key = key
-        self._iv = iv
-        self._cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        self._iv_length = iv_length
+        self._cipher = Cipher(algorithms.AES(key), modes.CBC(urandom(iv_length)), backend=default_backend())
 
     def encrypt(self, content):
         """
@@ -33,9 +33,11 @@ class AESCipher:
         if padding != 0:
             content += ''.join(self.padding_value for i in range(16 - padding))
 
+        iv = urandom(self._iv_length)
+        self._cipher.mode = modes.CBC(iv)
         encryptor = self._cipher.encryptor()
         ct = encryptor.update(content) + encryptor.finalize()
-        return ct
+        return iv + ct
 
     def decrypt(self, content):
         """
@@ -46,8 +48,10 @@ class AESCipher:
 
         :returns: Unencrypted string.
         """
+        iv = content[:self._iv_length]
+        self._cipher.mode = modes.CBC(iv)
         decryptor = self._cipher.decryptor()
-        content = decryptor.update(content) + decryptor.finalize()
+        content = decryptor.update(content[self._iv_length:]) + decryptor.finalize()
         return content.rstrip(self.padding_value)
 
     def encrypt_file(self, in_filename):
