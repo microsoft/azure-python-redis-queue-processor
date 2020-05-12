@@ -33,7 +33,7 @@ if __name__ == "__main__":
     print("Results count: " + str(resultsCount))
 
     # sleep for 5 seconds to allow blob consistency to catch up
-    time.sleep(5)
+    time.sleep(7)
 
     consolidatedResults = results.consolidate_results()
 
